@@ -43,7 +43,7 @@ var exchangeCmd = &cobra.Command{
 
 func init() {
 	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "configs/qf_got_settings", "set the fix session file")
-	exchangeCmd.PersistentFlags().StringVarP(&props, "props", "p", "resources/cpt-trader.yml", "set the exchange properties file")
+	exchangeCmd.PersistentFlags().StringVarP(&props, "props", "p", "resources/lt-trader.yml", "set the exchange properties file")
 	exchangeCmd.PersistentFlags().StringVarP(&instruments, "instruments", "i", "configs/instruments.txt", "the instrument file")
 	exchangeCmd.PersistentFlags().StringVarP(&port, "port", "P", "8080", "set the web server port")
 	exchangeCmd.PersistentFlags().BoolVarP(&profile, "profile", "c", false, "create CPU profiling output")

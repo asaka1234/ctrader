@@ -2,9 +2,10 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
+	"github.com/robaho/go-trader/conf"
 	"github.com/robaho/go-trader/pkg/protocol"
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -22,27 +23,42 @@ import (
 
 import _ "net/http/pprof"
 
+var (
+	module      = "exchange"
+	fix         string
+	props       string
+	instruments string
+	port        string
+	profile     bool
+)
+
+var exchangeCmd = &cobra.Command{
+	Use:   module,
+	Short: "exchange service",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		println("service server run...")
+	},
+}
+
+func init() {
+	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "configs/qf_got_settings", "set the fix session file")
+	exchangeCmd.PersistentFlags().StringVarP(&props, "props", "p", "resources/cpt-trader.yml", "set the exchange properties file")
+	exchangeCmd.PersistentFlags().StringVarP(&instruments, "instruments", "i", "configs/instruments.txt", "the instrument file")
+	exchangeCmd.PersistentFlags().StringVarP(&port, "port", "P", "8080", "set the web server port")
+	exchangeCmd.PersistentFlags().BoolVarP(&profile, "profile", "c", false, "create CPU profiling output")
+}
+
 func main() {
 
-	fix := flag.String("fix", "configs/qf_got_settings", "set the fix session file")
-	props := flag.String("props", "configs/got_settings", "set the exchange properties file")
-	instruments := flag.String("instruments", "configs/instruments.txt", "the instrument file")
-	port := flag.String("port", "8080", "set the web server port")
-	profile := flag.Bool("profile", false, "create CPU profiling output")
-
-	flag.Parse()
-
-	p, err := common.NewProperties(*props)
-	if err != nil {
-		fmt.Println("unable to exchange properties", err)
-	}
-
-	err = common.IMap.Load(*instruments)
+	//解析配置文件
+	err := conf.ParseConf(props, conf.AppConfig, true)
+	err = common.IMap.Load(instruments)
 	if err != nil {
 		fmt.Println("unable to load instruments", err)
 	}
 
-	cfg, err := os.Open(*fix)
+	cfg, err := os.Open(fix)
 	if err != nil {
 		panic(err)
 	}
@@ -59,21 +75,22 @@ func main() {
 	} else {
 		logFactory = quickfix.NewNullLogFactory()
 	}
+	//服务端,接受client传过来的数据
 	acceptor, err := quickfix.NewAcceptor(&exchange.App, storeFactory, appSettings, logFactory)
 	if err != nil {
 		panic(err)
 	}
 
 	var ex = &exchange.TheExchange
-
+	//相当于启动engine
 	ex.Start()
 
 	_ = acceptor.Start()
 	defer acceptor.Stop()
 
 	// start grpc protocol
-
-	grpc_port := p.GetString("grpc_port", "5000")
+	grpc_port := conf.AppConfig.GrpcPort
+	//grpc_port := p.GetString("grpc_port", "5000")
 
 	lis, err := net.Listen("tcp", ":"+grpc_port)
 	if err != nil {
@@ -92,10 +109,11 @@ func main() {
 		}
 	}()
 
-	exchange.StartWebServer(":" + *port)
-	fmt.Println("web server access available at :" + *port)
+	//又启动一个web-server
+	exchange.StartWebServer(":" + port)
+	fmt.Println("web server access available at :" + port)
 
-	if *profile {
+	if profile {
 		runtime.SetBlockProfileRate(1)
 	}
 
@@ -104,8 +122,8 @@ func main() {
 	fmt.Println("use 'help' to get a list of commands")
 	fmt.Print("Command?")
 
+	//输入命令行参数的解析
 	scanner := bufio.NewScanner(os.Stdin)
-
 	for scanner.Scan() {
 		s := scanner.Text()
 		parts := strings.Fields(s)
@@ -119,6 +137,7 @@ func main() {
 		} else if "sessions" == parts[0] {
 			fmt.Println("Active sessions: ", ex.ListSessions())
 		} else if "book" == parts[0] {
+			//获取当前的orderBook
 			book := exchange.GetBook(parts[1])
 			if book != nil {
 				fmt.Println(book)

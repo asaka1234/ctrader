@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
 	"golang.org/x/net/ipv4"
 	"log"
 	"net"
@@ -242,19 +243,8 @@ func startMarketData() {
 	lastSentBook = make(map[Instrument]uint64)
 
 	// read settings and create socket
-
-	props, err := NewProperties("configs/got_settings")
-	if err != nil {
-		panic("unable to read multicast addr")
-	}
-	saddr := props.GetString("multicast_addr", "")
-	if saddr == "" {
-		panic("unable to read multicast addr")
-	}
-	intf := props.GetString("multicast_intf", "lo0")
-	if intf == "" {
-		panic("unable to read multicast addr")
-	}
+	saddr := conf.AppConfig.MulticastAddr
+	intf := conf.AppConfig.MulticastIntf
 	_intf, err := net.InterfaceByName(intf)
 	if err != nil {
 		panic("unable to read multicast interface")
@@ -267,11 +257,7 @@ func startMarketData() {
 		panic(err)
 	}
 
-	rport := props.GetString("replay_port", "")
-	if rport == "" {
-		panic("unable to read replay port")
-	}
-
+	rport := conf.AppConfig.ReplayPort
 	c, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
 		panic(err)

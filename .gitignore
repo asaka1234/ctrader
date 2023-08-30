@@ -1,5 +1,6 @@
 node_modules
 out
+.idea
 cmd/algo/algo
 cmd/client/client
 cmd/exchange/exchange

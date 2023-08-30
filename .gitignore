@@ -1,2 +1,7 @@
 node_modules
 out
+cmd/algo/algo
+cmd/client/client
+cmd/exchange/exchange
+cmd/marketmaker/marketmaker
+cmd/playback/playback

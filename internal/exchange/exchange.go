@@ -100,10 +100,13 @@ type exchange struct {
 	nextOrder  int32
 }
 
+// 上游传过来一个order, 需要撮合和发送出去
 func (e *exchange) CreateOrder(client exchangeClient, order *Order) (OrderID, error) {
+	//拿到orderbook
 	ob := e.lockOrderBook(order.Instrument)
 	defer ob.Unlock()
 
+	//类似seq_id,是自增的
 	nextOrder := atomic.AddInt32(&e.nextOrder, 1)
 
 	s := e.lockSession(client)
@@ -117,12 +120,14 @@ func (e *exchange) CreateOrder(client exchangeClient, order *Order) (OrderID, er
 
 	so := sessionOrder{client, order, time.Now()}
 
+	//开始真正的去撮合
 	trades, err := ob.add(so)
 	if err != nil {
 		return -1, err
 	}
 
 	book := ob.buildBook()
+	//对撮合的结果做push推送
 	sendMarketData(MarketEvent{book, trades})
 	client.SendTrades(trades)
 	if len(trades) == 0 || order.OrderState == Cancelled {

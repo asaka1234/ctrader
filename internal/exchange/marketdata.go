@@ -18,6 +18,8 @@ import (
 	"github.com/robaho/go-trader/pkg/protocol"
 )
 
+//用来做行情加工和推送. 相当于是market和push-center两个服务的合集
+
 // market data caches the latest books, and publishes books and exchange trades via multicast
 
 var bookCache sync.Map
@@ -119,6 +121,7 @@ func publish() {
 	for {
 		event := <-eventChannel
 
+		//拿到最新的成交和orderbook
 		book := getLatestBook(event.book)
 		trades := coalesceTrades(event.trades)
 
@@ -230,6 +233,7 @@ func sendPacket(data []byte) {
 
 	binary.LittleEndian.PutUint64(data, packetNumber)
 
+	//udp去发送
 	_, err := udpCon.Write(data)
 	if err != nil {
 		fmt.Println("error sending packet", err)
@@ -238,6 +242,7 @@ func sendPacket(data []byte) {
 	rememberPacket(packetNumber, data)
 }
 
+// 感觉是推送行情数据
 func startMarketData() {
 	eventChannel = make(chan MarketEvent, 1000)
 	lastSentBook = make(map[Instrument]uint64)
@@ -310,6 +315,7 @@ type PacketHistory struct {
 	packets list.List
 }
 
+// 积攒一个list
 var history PacketHistory
 
 func rememberPacket(packetNumber uint64, data []byte) {

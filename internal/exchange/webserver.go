@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+//----------负责对外提供rest api接口----------------------------------
+
 type empty struct{}
 
 var templatePath = "web/templates/"

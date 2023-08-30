@@ -39,16 +39,19 @@ func (ob *orderBook) String() string {
 func (ob *orderBook) add(so sessionOrder) ([]trade, error) {
 	so.order.OrderState = Booked
 
+	//先把新的order加入到orderbook里
 	if so.order.Side == Buy {
 		ob.bids = insertSort(ob.bids, so, 1)
 	} else {
 		ob.asks = insertSort(ob.asks, so, -1)
 	}
 
+	//随后开始撮合
 	// match and build trades
 	var trades = matchTrades(ob)
 
 	// cancel any remaining market order
+	//市价单,剩余的部分就撤单！
 	if so.order.OrderType == Market && so.order.IsActive() {
 		so.order.OrderState = Cancelled
 		ob.remove(so)
@@ -71,6 +74,8 @@ func insertSort(orders []sessionOrder, so sessionOrder, direction int) []session
 
 var nextTradeID int64 = 0
 
+// 撮合逻辑
+// 感觉跟我们认知的match是不一样的
 func matchTrades(book *orderBook) []trade {
 	var trades []trade
 	var tradeID int64 = 0

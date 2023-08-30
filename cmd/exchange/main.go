@@ -26,7 +26,7 @@ import _ "net/http/pprof"
 var (
 	module      = "exchange"
 	fix         string
-	props       string
+	config      string
 	instruments string
 	port        string
 	profile     bool
@@ -42,22 +42,23 @@ var exchangeCmd = &cobra.Command{
 }
 
 func init() {
-	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "configs/qf_got_settings", "set the fix session file")
-	exchangeCmd.PersistentFlags().StringVarP(&props, "props", "p", "resources/lt-trader.yml", "set the exchange properties file")
-	exchangeCmd.PersistentFlags().StringVarP(&instruments, "instruments", "i", "configs/instruments.txt", "the instrument file")
+	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/got_fixapi_settings.cfg", "set the fix session file")
+	exchangeCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
+	exchangeCmd.PersistentFlags().StringVarP(&instruments, "instruments", "i", "resources/instruments.txt", "the instrument file")
 	exchangeCmd.PersistentFlags().StringVarP(&port, "port", "P", "8080", "set the web server port")
-	exchangeCmd.PersistentFlags().BoolVarP(&profile, "profile", "c", false, "create CPU profiling output")
+	exchangeCmd.PersistentFlags().BoolVarP(&profile, "profile", "p", false, "create CPU profiling output")
 }
 
 func main() {
 
-	//解析配置文件
-	err := conf.ParseConf(props, conf.AppConfig, true)
+	//1. 解析配置文件
+	err := conf.ParseConf(config, conf.AppConfig, true)
+	//2. 解析支持的币对
 	err = common.IMap.Load(instruments)
 	if err != nil {
 		fmt.Println("unable to load instruments", err)
 	}
-
+	//3. 解析fixapi的配置
 	cfg, err := os.Open(fix)
 	if err != nil {
 		panic(err)
@@ -81,17 +82,17 @@ func main() {
 		panic(err)
 	}
 
+	//-------感觉这里是exchange的引擎--------------------------
 	var ex = &exchange.TheExchange
-	//相当于启动engine
+	//相当于启动engine，本质是启动了行情+push服务
 	ex.Start()
 
+	//1. 启动fix acceptor (类似启动web-server,从而client可以通过fix protocol来交互)
 	_ = acceptor.Start()
 	defer acceptor.Stop()
 
-	// start grpc protocol
+	//2. 启动grpc服务, client可以通过grpc来通信交互
 	grpc_port := conf.AppConfig.GrpcPort
-	//grpc_port := p.GetString("grpc_port", "5000")
-
 	lis, err := net.Listen("tcp", ":"+grpc_port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -109,7 +110,7 @@ func main() {
 		}
 	}()
 
-	//又启动一个web-server
+	//3. 启动一个web-server
 	exchange.StartWebServer(":" + port)
 	fmt.Println("web server access available at :" + port)
 
@@ -117,6 +118,7 @@ func main() {
 		runtime.SetBlockProfileRate(1)
 	}
 
+	//-----------------------启动之后,也可以继续通过console来输入一些参数,指导程序做一定操作和输出------------------------------------
 	watching := sync.Map{}
 
 	fmt.Println("use 'help' to get a list of commands")

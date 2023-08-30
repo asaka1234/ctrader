@@ -11,6 +11,8 @@ import (
 	"github.com/robaho/go-trader/pkg/protocol"
 )
 
+//----------负责对外提供grpc接口----------------------------------
+
 type grpcServer struct {
 	e *exchange
 }
@@ -143,6 +145,7 @@ func (s *grpcServer) Connection(conn protocol.Exchange_ConnectionServer) error {
 		case *protocol.InMessage_Massquote:
 			err = s.massquote(conn, client, msg.GetRequest().(*protocol.InMessage_Massquote).Massquote)
 		case *protocol.InMessage_Create:
+			//进入一个新order,开始撮合和做行情推送
 			err = s.create(conn, client, msg.GetRequest().(*protocol.InMessage_Create).Create)
 		case *protocol.InMessage_Modify:
 			err = s.modify(conn, client, msg.GetRequest().(*protocol.InMessage_Modify).Modify)

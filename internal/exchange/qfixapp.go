@@ -21,6 +21,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+//----------负责对外提供fix api接口----------------------------------
+
 var App myApplication
 var endOfDownload = NewInstrument(0, "endofdownload")
 
@@ -76,7 +78,10 @@ func (app *myApplication) FromApp(message *quickfix.Message, sessionID quickfix.
 	return nil
 }
 
+// 收到一个新的order
 func (app *myApplication) onNewOrderSingle(msg newordersingle.NewOrderSingle, sessionID quickfix.SessionID) quickfix.MessageRejectError {
+
+	//1. 先做参数校验
 	clOrdId, err := msg.GetClOrdID()
 	if err != nil {
 		return err
@@ -116,6 +121,7 @@ func (app *myApplication) onNewOrderSingle(msg newordersingle.NewOrderSingle, se
 	}
 	order.Id = NewOrderID(clOrdId)
 
+	//2. 随后开始撮合和推送行情
 	c := fixClient{sessionID: sessionID}
 	app.e.CreateOrder(c, order)
 

@@ -32,8 +32,8 @@ const (
 const (
 	New         OrderState = "new"
 	Booked      OrderState = "booked"
-	PartialFill OrderState = "partial"
-	Filled      OrderState = "filled"
+	PartialFill OrderState = "partial" //部分成交
+	Filled      OrderState = "filled"  //全部成交
 	Cancelled   OrderState = "cancelled"
 	Rejected    OrderState = "rejected"
 )

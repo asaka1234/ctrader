@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 )
 
+//金融工具(financial instruments)是指在金融市场中可交易的金融资产
+
 // global instrument map which is fully synchronized
 var IMap instrumentMap
 

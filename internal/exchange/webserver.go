@@ -20,7 +20,7 @@ import (
 
 type empty struct{}
 
-var templatePath = "web/templates/"
+var templatePath = "statics/templates/"
 
 var t *hot.Template
 
@@ -42,7 +42,7 @@ func StartWebServer(addr string) {
 	t = tpl
 
 	go func() {
-		http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("web/assets"))))
+		http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("statics/assets"))))
 		http.HandleFunc("/book", bookHandler)
 		http.HandleFunc("/instruments", instrumentsHandler)
 		http.HandleFunc("/sessions", sessionsHandler)

@@ -25,7 +25,7 @@ function connect() {
 
     connection.onclose = function (evt) {
         var f = document.getElementById("book")
-        f.innerText = "web socket is closed"
+        f.innerText = "statics socket is closed"
         console.error("WebSocket closed:", evt);
     }
 }

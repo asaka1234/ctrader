@@ -46,7 +46,7 @@ func init() {
 	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/qf_acceptor_settings.cfg", "set the fix session file")
 	exchangeCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
 	exchangeCmd.PersistentFlags().StringVarP(&instruments, "instruments", "i", "resources/instruments.txt", "the instrument file")
-	exchangeCmd.PersistentFlags().StringVarP(&port, "port", "P", "8080", "set the web server port")
+	exchangeCmd.PersistentFlags().StringVarP(&port, "port", "P", "8080", "set the statics server port")
 	exchangeCmd.PersistentFlags().BoolVarP(&profile, "profile", "p", false, "create CPU profiling output")
 }
 
@@ -120,7 +120,7 @@ func start() {
 
 	//3. 启动一个web-server
 	exchange.StartWebServer(":" + port)
-	fmt.Println("web server access available at :" + port)
+	fmt.Println("statics server access available at :" + port)
 
 	if profile {
 		runtime.SetBlockProfileRate(1)

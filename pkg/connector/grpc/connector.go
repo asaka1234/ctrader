@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
 	. "github.com/robaho/go-trader/pkg/common"
 	"github.com/robaho/go-trader/pkg/protocol"
 	"google.golang.org/grpc"
@@ -25,8 +26,8 @@ type grpcConnector struct {
 	loggedIn StatusBool
 	// true after all instruments are downloaded from exchange
 	downloaded StatusBool
-	props      Properties
-	log        io.Writer
+	//props      Properties
+	log io.Writer
 }
 
 func (c *grpcConnector) IsConnected() bool {
@@ -38,7 +39,7 @@ func (c *grpcConnector) Connect() error {
 		return AlreadyConnected
 	}
 
-	addr := c.props.GetString("grpc_host", "localhost") + ":" + c.props.GetString("grpc_port", "5000")
+	addr := conf.AppConfig.GrpcHost + ":" + conf.AppConfig.GrpcPort
 
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
@@ -346,11 +347,11 @@ func (c *grpcConnector) handleExecutionReport(rpt *protocol.ExecutionReport) {
 
 }
 
-func NewConnector(callback ConnectorCallback, props Properties, logOutput io.Writer) ExchangeConnector {
+func NewConnector(callback ConnectorCallback, logOutput io.Writer) ExchangeConnector {
 	if logOutput == nil {
 		logOutput = os.Stdout
 	}
-	c := &grpcConnector{props: props, log: logOutput}
+	c := &grpcConnector{log: logOutput}
 	c.callback = callback
 
 	return c

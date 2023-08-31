@@ -1,15 +1,99 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
+	"github.com/spf13/cobra"
 	"log"
+	"os"
 	"time"
 
 	. "github.com/robaho/go-trader/pkg/common"
 	"github.com/robaho/go-trader/pkg/connector"
 )
+
+var (
+	module = "algo" //回测
+	fix    string
+	config string
+	offset float64
+	symbol string
+)
+
+var playbackCmd = &cobra.Command{
+	Use:   module,
+	Short: "exchange algo",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		start()
+		println("algo service run...")
+	},
+}
+
+func init() {
+	playbackCmd.PersistentFlags().StringVarP(&symbol, "symbol", "s", "IBM", "set the symbol")
+	playbackCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/qf_algo_settings.cfg", "set the fix session file")
+	playbackCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
+	playbackCmd.PersistentFlags().Float64VarP(&offset, "offset", "o", 1.0, "price offset for entry exit")
+}
+
+func main() {
+	if err := playbackCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+// simple "algo" that buys a instrument, with an exit price offset - double the offset for exiting a loser.
+// It tracks and reports total profit every 10 seconds.
+// Very simple since it only handles an initial buy with quantities of 1.
+func start() {
+	var callback = MyAlgo{state: preInstrument}
+	callback.symbol = symbol
+	callback.offset = fixed.NewF(offset)
+
+	//1. 解析配置文件
+	err := conf.ParseConf(config, conf.AppConfig, true)
+	/*
+		p, err := NewProperties(*props)
+		if err != nil {
+			panic(err)
+		}
+		p.SetString("fix", *fix)
+	*/
+
+	exchange = connector.NewConnector(&callback, fix, nil)
+
+	exchange.Connect()
+	if !exchange.IsConnected() {
+		panic("exchange is not connected")
+	}
+
+	err = exchange.DownloadInstruments()
+	if err != nil {
+		panic(err)
+	}
+
+	instrument := IMap.GetBySymbol(callback.symbol)
+	if instrument == nil {
+		log.Fatal("unable symbol", symbol)
+	}
+
+	fmt.Println("running algo on", instrument.Symbol(), "...")
+
+	for {
+		time.Sleep(time.Duration(10) * time.Second)
+		tp := callback.totalProfit
+		if tp.LessThan(fixed.ZERO) {
+			fmt.Println("<<<<< total profit", tp)
+		} else {
+			fmt.Println(">>>>> total profit", tp)
+		}
+	}
+}
+
+//-------------------------
 
 type algoState int
 
@@ -100,58 +184,4 @@ func (a *MyAlgo) OnFill(fill *Fill) {
 
 func (*MyAlgo) OnTrade(trade *Trade) {
 	//fmt.Println("trade", trade)
-}
-
-//
-// simple "algo" that buys a instrument, with an exit price offset - double the offset for exiting a loser.
-// It tracks and reports total profit every 10 seconds.
-// Very simple since it only handles an initial buy with quantities of 1.
-//
-func main() {
-	var callback = MyAlgo{state: preInstrument}
-
-	symbol := flag.String("symbol", "IBM", "set the symbol")
-	fix := flag.String("fix", "configs/qf_algo_settings", "set the fix session file")
-	props := flag.String("props", "configs/got_settings", "set exchange properties file")
-	offset := flag.Float64("offset", 1.0, "price offset for entry exit")
-
-	flag.Parse()
-
-	callback.symbol = *symbol
-	callback.offset = fixed.NewF(*offset)
-
-	p, err := NewProperties(*props)
-	if err != nil {
-		panic(err)
-	}
-	p.SetString("fix", *fix)
-
-	exchange = connector.NewConnector(&callback, p, nil)
-
-	exchange.Connect()
-	if !exchange.IsConnected() {
-		panic("exchange is not connected")
-	}
-
-	err = exchange.DownloadInstruments()
-	if err != nil {
-		panic(err)
-	}
-
-	instrument := IMap.GetBySymbol(callback.symbol)
-	if instrument == nil {
-		log.Fatal("unable symbol", symbol)
-	}
-
-	fmt.Println("running algo on", instrument.Symbol(), "...")
-
-	for {
-		time.Sleep(time.Duration(10) * time.Second)
-		tp := callback.totalProfit
-		if tp.LessThan(fixed.ZERO) {
-			fmt.Println("<<<<< total profit", tp)
-		} else {
-			fmt.Println(">>>>> total profit", tp)
-		}
-	}
 }

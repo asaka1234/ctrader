@@ -1,8 +1,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"github.com/robaho/go-trader/conf"
+	"github.com/spf13/cobra"
 	"log"
 	"math/rand"
 	"os"
@@ -14,6 +15,45 @@ import (
 	. "github.com/robaho/go-trader/pkg/common"
 	"github.com/robaho/go-trader/pkg/connector"
 )
+
+var (
+	module = "mm"
+	fix    string
+	config string
+	symbol string
+	delay  int
+	//proto      string
+	duration   int
+	cpuprofile string
+)
+
+var mmCmd = &cobra.Command{
+	Use:   module,
+	Short: "exchange mm",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		start()
+		println("mm service run...")
+	},
+}
+
+func init() {
+	mmCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/qf_mm1_settings.cfg", "set the fix session file")
+	mmCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
+	mmCmd.PersistentFlags().StringVarP(&symbol, "symbol", "s", "IBM", "set the symbol")
+	mmCmd.PersistentFlags().IntVarP(&delay, "delay", "d", 0, "set the delay in ms after each quote, 0 to disable")
+	//mmCmd.PersistentFlags().StringVarP(&proto, "proto", "p", "", "override protocol, grpc or fix")
+	mmCmd.PersistentFlags().IntVarP(&duration, "duration", "d", 0, "run for N seconds, 0 = forever")
+	mmCmd.PersistentFlags().StringVarP(&cpuprofile, "cpuprofile", "c", "", "write cpu profile to file")
+
+}
+
+func main() {
+	if err := mmCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
 
 type MyCallback struct {
 	ch     chan bool
@@ -40,21 +80,11 @@ func (*MyCallback) OnTrade(trade *Trade) {
 	fmt.Println("trade", trade)
 }
 
-func main() {
+func start() {
 	var callback = MyCallback{make(chan bool, 128), ""}
 
-	symbol := flag.String("symbol", "IBM", "set the symbol")
-	fix := flag.String("fix", "configs/qf_mm1_settings", "set the fix session file")
-	props := flag.String("props", "configs/got_settings", "set exchange properties file")
-	delay := flag.Int("delay", 0, "set the delay in ms after each quote, 0 to disable")
-	proto := flag.String("proto", "", "override protocol, grpc or fix")
-	duration := flag.Int("duration", 0, "run for N seconds, 0 = forever")
-	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
-
-	flag.Parse()
-
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -62,18 +92,22 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	callback.symbol = *symbol
+	callback.symbol = symbol
 
-	p, err := NewProperties(*props)
-	if err != nil {
-		panic(err)
-	}
-	if *proto != "" {
-		p.SetString("protocol", *proto)
-	}
-	p.SetString("fix", *fix)
+	//1. 解析配置文件
+	err := conf.ParseConf(config, conf.AppConfig, true)
+	/*
+		p, err := NewProperties(*props)
+		if err != nil {
+			panic(err)
+		}
+		if *proto != "" {
+			p.SetString("protocol", *proto)
+		}
+		p.SetString("fix", *fix)
+	*/
 
-	var exchange = connector.NewConnector(&callback, p, nil)
+	var exchange = connector.NewConnector(&callback, fix, nil)
 
 	exchange.Connect()
 	if !exchange.IsConnected() {
@@ -93,7 +127,7 @@ func main() {
 	var updates uint64
 
 	start := time.Now()
-	end := start.Add(time.Duration(int64(*duration)) * time.Second)
+	end := start.Add(time.Duration(int64(duration)) * time.Second)
 
 	fmt.Println("sending quotes on", instrument.Symbol(), "...")
 
@@ -109,7 +143,7 @@ func main() {
 
 	h := gohistogram.NewHistogram(50)
 
-	for *duration == 0 || time.Now().Before(end) {
+	for duration == 0 || time.Now().Before(end) {
 		var delta = 1
 		var r = r.Intn(10)
 		if r <= 2 {
@@ -149,8 +183,8 @@ func main() {
 			}
 		}
 		h.Add(float64(time.Now().Sub(now).Nanoseconds()))
-		if *delay != 0 {
-			time.Sleep(time.Duration(int64(*delay)) * time.Millisecond)
+		if delay != 0 {
+			time.Sleep(time.Duration(int64(delay)) * time.Millisecond)
 		}
 		atomic.AddUint64(&updates, 1)
 		if time.Now().Sub(start).Seconds() > 10 {

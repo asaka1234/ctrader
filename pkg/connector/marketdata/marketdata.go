@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/robaho/go-trader/conf"
 	"io"
 	"log"
 	"net"
@@ -22,17 +23,17 @@ type marketDataReceiver struct {
 }
 
 // StartMarketDataReceiver starts the multicast marketdata processor
-func StartMarketDataReceiver(c ExchangeConnector, callback ConnectorCallback, props Properties, logOutput io.Writer) {
+func StartMarketDataReceiver(c ExchangeConnector, callback ConnectorCallback, logOutput io.Writer) {
 	// read settings and create socket
 
 	md := marketDataReceiver{c: c, callback: callback, log: logOutput}
 
-	saddr := props.GetString("multicast_addr", "")
+	saddr := conf.AppConfig.MulticastAddr
 	if saddr == "" {
 		panic("unable to read multicast addr")
 	}
 
-	intf := props.GetString("multicast_intf", "lo0")
+	intf := conf.AppConfig.MulticastIntf
 	if intf == "" {
 		panic("unable to read multicast interface")
 	}
@@ -41,12 +42,12 @@ func StartMarketDataReceiver(c ExchangeConnector, callback ConnectorCallback, pr
 		panic(err)
 	}
 
-	rhost := props.GetString("replay_host", "")
+	rhost := conf.AppConfig.ReplayHost
 	if rhost == "" {
 		panic("unable to read replay host")
 	}
 
-	rport := props.GetString("replay_port", "")
+	rport := conf.AppConfig.ReplayPort
 	if rport == "" {
 		panic("unable to read replay port")
 	}

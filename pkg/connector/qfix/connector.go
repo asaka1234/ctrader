@@ -249,13 +249,12 @@ func (c *qfixConnector) GetOrder(id OrderID) *Order {
 	return _order.(*Order)
 }
 
-func NewConnector(callback ConnectorCallback, props Properties, logOutput io.Writer) ExchangeConnector {
+func NewConnector(callback ConnectorCallback, fixSettingFilename string, logOutput io.Writer) ExchangeConnector {
 	if logOutput == nil {
 		logOutput = os.Stdout
 	}
 
-	filename := props.GetString("fix", "")
-	c := &qfixConnector{settings: filename, log: logOutput}
+	c := &qfixConnector{settings: fixSettingFilename, log: logOutput}
 	c.callback = callback
 
 	return c

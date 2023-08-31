@@ -3,8 +3,9 @@ package main
 import (
 	"bufio"
 	"errors"
-	"flag"
 	"fmt"
+	"github.com/robaho/go-trader/conf"
+	"github.com/spf13/cobra"
 	"os"
 	"strconv"
 	"strings"
@@ -14,41 +15,53 @@ import (
 	"github.com/robaho/go-trader/pkg/connector"
 )
 
-type MyCallback struct {
+var (
+	module   = "playback" //回测
+	fix      string
+	config   string
+	speed    float64
+	playback string
+)
+
+var playbackCmd = &cobra.Command{
+	Use:   module,
+	Short: "exchange playback",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		start()
+		println("playback service run...")
+	},
 }
 
-func (*MyCallback) OnBook(book *Book) {
-}
-
-func (*MyCallback) OnInstrument(instrument Instrument) {
-}
-
-func (*MyCallback) OnOrderStatus(order *Order) {
-}
-
-func (*MyCallback) OnFill(fill *Fill) {
-}
-
-func (*MyCallback) OnTrade(trade *Trade) {
+func init() {
+	playbackCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/qf_playback_settings.cfg", "set the fix session file")
+	playbackCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
+	playbackCmd.PersistentFlags().Float64VarP(&speed, "speed", "s", 1.0, "set the playback speed")
+	playbackCmd.PersistentFlags().StringVarP(&playback, "file", "f", "resources/playback.txt", "set the delay in ms after each quote, 0 to disable")
 }
 
 func main() {
+	if err := playbackCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func start() {
 	var callback = MyCallback{}
 
-	fix := flag.String("fix", "configs/qf_playback_settings", "set the fix session file")
-	props := flag.String("props", "configs/got_settings", "set exchange properties file")
-	speed := flag.Float64("speed", 1.0, "set the playback speed")
-	playback := flag.String("file", "playback.txt", "set the playback file")
+	//1. 解析配置文件
+	err := conf.ParseConf(config, conf.AppConfig, true)
+	/*
+		p, err := NewProperties(*props)
+		if err != nil {
+			panic(err)
+		}
+		p.SetString("fix", *fix)
 
-	flag.Parse()
+	*/
 
-	p, err := NewProperties(*props)
-	if err != nil {
-		panic(err)
-	}
-	p.SetString("fix", *fix)
-
-	var exchange = connector.NewConnector(&callback, p, nil)
+	var exchange = connector.NewConnector(&callback, fix, nil)
 
 	exchange.Connect()
 	if !exchange.IsConnected() {
@@ -60,7 +73,7 @@ func main() {
 		panic(err)
 	}
 
-	f, err := os.Open(*playback)
+	f, err := os.Open(playback)
 	if err != nil {
 		panic(err)
 	}
@@ -101,11 +114,30 @@ func main() {
 		exchange.Quote(instrument, bidPrice, bidQty, askPrice, askQty)
 
 		if duration != 0 {
-			time.Sleep(time.Duration(int64(float64(duration) / (*speed))))
+			time.Sleep(time.Duration(int64(float64(duration) / (speed))))
 		}
 		lastTimestamp = timestamp
 	}
 }
+
+type MyCallback struct {
+}
+
+func (*MyCallback) OnBook(book *Book) {
+}
+
+func (*MyCallback) OnInstrument(instrument Instrument) {
+}
+
+func (*MyCallback) OnOrderStatus(order *Order) {
+}
+
+func (*MyCallback) OnFill(fill *Fill) {
+}
+
+func (*MyCallback) OnTrade(trade *Trade) {
+}
+
 func calcDuration(lastTimestamp string, timestamp string) (time.Duration, error) {
 	if strings.HasPrefix(timestamp, "+") {
 		return calcRelativeDuration(timestamp)

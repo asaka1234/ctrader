@@ -1,10 +1,12 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
+	"github.com/spf13/cobra"
 	"log"
+	"os"
 	"strings"
 	"sync"
 
@@ -12,6 +14,78 @@ import (
 	"github.com/robaho/go-trader/pkg/connector"
 	"github.com/robaho/gocui"
 )
+
+var (
+	module = "client"
+	fix    string
+	config string
+)
+
+var exchangeCmd = &cobra.Command{
+	Use:   module,
+	Short: "exchange client",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		start()
+		println("client run...")
+	},
+}
+
+func init() {
+	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/qf_initiator_settings.cfg", "set the fix session file")
+	exchangeCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
+}
+
+func main() {
+	if err := exchangeCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func start() {
+
+	//1. 解析配置文件
+	err := conf.ParseConf(config, conf.AppConfig, true)
+
+	var callback = MyCallback{}
+
+	g, err := gocui.NewGui(gocui.OutputNormal)
+	if err != nil {
+		log.Panicln(err)
+	}
+	g.EscapeProcessing = false // we manage our own colors
+	defer g.Close()
+
+	gui = g
+
+	g.SetManagerFunc(layout)
+
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("commands", gocui.KeyEnter, gocui.ModNone, processCommand); err != nil {
+		log.Panicln(err)
+	}
+
+	exchange = connector.NewConnector(callback, fix, viewLogger{})
+
+	exchange.Connect()
+	if !exchange.IsConnected() {
+		panic("exchange is not connected")
+	}
+
+	err = exchange.DownloadInstruments()
+	if err != nil {
+		panic(err)
+	}
+
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		log.Panicln(err)
+	}
+}
+
+//-----------------------------------------------------
 
 var gui *gocui.Gui
 var activeOrderLock = sync.RWMutex{}
@@ -376,53 +450,4 @@ func printCommand(v *gocui.View) {
 	v.FgColor = gocui.AttrBold
 	fmt.Fprint(v, "Command?")
 	v.FgColor = gocui.ColorDefault
-}
-
-func main() {
-	var callback = MyCallback{}
-
-	fix := flag.String("fix", "configs/qf_client_settings", "set the fix session file")
-	props := flag.String("props", "configs/got_settings", "set exchange properties file")
-
-	flag.Parse()
-
-	p, err := NewProperties(*props)
-	if err != nil {
-		panic(err)
-	}
-	p.SetString("fix", *fix)
-
-	g, err := gocui.NewGui(gocui.OutputNormal)
-	if err != nil {
-		log.Panicln(err)
-	}
-	g.EscapeProcessing = false // we manage our own colors
-	defer g.Close()
-
-	gui = g
-
-	g.SetManagerFunc(layout)
-
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("commands", gocui.KeyEnter, gocui.ModNone, processCommand); err != nil {
-		log.Panicln(err)
-	}
-
-	exchange = connector.NewConnector(callback, p, viewLogger{})
-
-	exchange.Connect()
-	if !exchange.IsConnected() {
-		panic("exchange is not connected")
-	}
-
-	err = exchange.DownloadInstruments()
-	if err != nil {
-		panic(err)
-	}
-
-	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-		log.Panicln(err)
-	}
 }

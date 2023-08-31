@@ -36,13 +36,14 @@ var exchangeCmd = &cobra.Command{
 	Use:   module,
 	Short: "exchange service",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		start()
 		println("service server run...")
 	},
 }
 
 func init() {
-	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/got_fixapi_settings.cfg", "set the fix session file")
+	//qf -> quickfix
+	exchangeCmd.PersistentFlags().StringVarP(&fix, "fix", "f", "resources/qf_acceptor_settings.cfg", "set the fix session file")
 	exchangeCmd.PersistentFlags().StringVarP(&config, "config", "c", "resources/lt-trader.yml", "set the exchange properties file")
 	exchangeCmd.PersistentFlags().StringVarP(&instruments, "instruments", "i", "resources/instruments.txt", "the instrument file")
 	exchangeCmd.PersistentFlags().StringVarP(&port, "port", "P", "8080", "set the web server port")
@@ -50,6 +51,13 @@ func init() {
 }
 
 func main() {
+	if err := exchangeCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func start() {
 
 	//1. 解析配置文件
 	err := conf.ParseConf(config, conf.AppConfig, true)

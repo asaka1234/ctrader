@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/gernest/hot"
+	"github.com/robaho/go-trader/conf"
 	. "github.com/robaho/go-trader/pkg/common"
 	"golang.org/x/net/websocket"
 	"math/rand"
@@ -23,6 +24,7 @@ var templatePath = "web/templates/"
 
 var t *hot.Template
 
+// addr是通过命令行参数传入的port
 func StartWebServer(addr string) {
 	var err error
 
@@ -52,6 +54,7 @@ func StartWebServer(addr string) {
 		http.ListenAndServe(addr, nil)
 	}()
 
+	//负责监听web前端发送过来的:websocket连接请求.  随后存储用户的订阅请求
 	go func() {
 		mux := http.NewServeMux()
 		mux.Handle("/", websocket.Handler(BookServer))
@@ -61,6 +64,7 @@ func StartWebServer(addr string) {
 		}
 	}()
 
+	//依据用户的订阅请求, 持续不断的push最新的orderbook
 	go websocketPublisher()
 }
 
@@ -128,20 +132,24 @@ type BookRequest struct {
 	Sequence uint64
 }
 
+// key是conn, value是对应symbol
 var webCons sync.Map
 
+// 收到一个websocket连接请求
 func BookServer(ws *websocket.Conn) {
 	defer webCons.Delete(ws)
 
 	for {
+		//前端通过ws发来了一个订阅请求,一次性的, 不牵扯到后续的持续不断的推送
+		//相当于是req. 实际收到后也会存起来，随后通过单独的task来做持续不断的推送
 		request := BookRequest{}
-
 		if websocket.JSON.Receive(ws, &request) != nil {
 			break
 		}
 
 		webCons.Store(ws, request.Symbol)
 
+		//收到的订阅请求：就是获取指定symbol的orderbook,所以查出来并且返回回去
 		book := GetBook(request.Symbol)
 		if book == nil {
 			book = &Book{}
@@ -217,8 +225,8 @@ func instrumentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	stats := make([]Statistics, 0)
 
-	for _, s := range IMap.AllSymbols() {
-		stats0 := getStatistics(IMap.GetBySymbol(s))
+	for _, s := range conf.IMap.AllSymbols() {
+		stats0 := getStatistics(conf.IMap.GetBySymbol(s))
 		if stats0 == nil {
 			s0 := Statistics{}
 			s0.Symbol = s
@@ -250,7 +258,7 @@ func bookHandler(w http.ResponseWriter, r *http.Request) {
 func apiBookHandler(w http.ResponseWriter, r *http.Request) {
 	symbol := strings.TrimPrefix(r.URL.Path, "/api/book/")
 
-	instrument := IMap.GetBySymbol(symbol)
+	instrument := conf.IMap.GetBySymbol(symbol)
 	if instrument == nil {
 		http.Error(w, "the symbol "+symbol+" is unknown", http.StatusNotFound)
 	} else {
@@ -266,7 +274,7 @@ func apiBookHandler(w http.ResponseWriter, r *http.Request) {
 func apiStatsHandler(w http.ResponseWriter, r *http.Request) {
 	symbol := strings.TrimPrefix(r.URL.Path, "/api/stats/")
 
-	instrument := IMap.GetBySymbol(symbol)
+	instrument := conf.IMap.GetBySymbol(symbol)
 	if instrument == nil {
 		http.Error(w, "the symbol "+symbol+" is unknown", http.StatusNotFound)
 	} else {

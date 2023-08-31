@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/entity"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type ExchangeConnector interface {
 	ModifyOrder(order OrderID, price Fixed, quantity Fixed) error
 	CancelOrder(order OrderID) error
 
-	Quote(instrument Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error
+	Quote(instrument entity.Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error
 
 	GetExchangeCode() string
 
@@ -29,7 +30,7 @@ type ExchangeConnector interface {
 
 // a fill on an order or quote
 type Fill struct {
-	Instrument Instrument
+	Instrument entity.Instrument
 	IsQuote    bool
 	// Order will be nil on quote trade, the order is unlocked
 	Order      *Order
@@ -42,7 +43,7 @@ type Fill struct {
 
 // an exchange trade, not necessarily initiated by the current client
 type Trade struct {
-	Instrument Instrument
+	Instrument entity.Instrument
 	Quantity   Fixed
 	Price      Fixed
 	ExchangeID string
@@ -52,7 +53,7 @@ type Trade struct {
 type ConnectorCallback interface {
 	OnBook(*Book)
 	// the following is for intra-day instrument addition, or initial startup
-	OnInstrument(Instrument)
+	OnInstrument(entity.Instrument)
 	// the callback will have the order locked, and will unlock when the callback returns
 	OnOrderStatus(*Order)
 	OnFill(*Fill)

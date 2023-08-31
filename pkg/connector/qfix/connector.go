@@ -4,6 +4,7 @@ import (
 	"github.com/quickfixgo/fix44/securitydefinitionrequest"
 	"github.com/quickfixgo/fix44/securitylistrequest"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/entity"
 	"io"
 	"os"
 	"strconv"
@@ -209,7 +210,7 @@ func (c *qfixConnector) CancelOrder(id OrderID) error {
 	return quickfix.SendToTarget(msg, c.sessionID)
 }
 
-func (c *qfixConnector) Quote(instrument Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
+func (c *qfixConnector) Quote(instrument entity.Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
 
 	if !c.loggedIn.IsTrue() {
 		return NotConnected

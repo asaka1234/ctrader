@@ -5,6 +5,8 @@ import (
 	"github.com/quickfixgo/fix44/securitydefinition"
 	"github.com/quickfixgo/fix44/securitylistrequest"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"strconv"
 	"sync"
 
@@ -24,7 +26,7 @@ import (
 //----------负责对外提供fix api接口----------------------------------
 
 var App myApplication
-var endOfDownload = NewInstrument(0, "endofdownload")
+var endOfDownload = entity.NewInstrument(0, "endofdownload")
 
 type myApplication struct {
 	*quickfix.MessageRouter
@@ -109,7 +111,7 @@ func (app *myApplication) onNewOrderSingle(msg newordersingle.NewOrderSingle, se
 			return err
 		}
 	}
-	instrument := IMap.GetBySymbol(symbol)
+	instrument := conf.IMap.GetBySymbol(symbol)
 	if instrument == nil {
 		return quickfix.NewMessageRejectError("unknown symbol "+symbol, 0, nil)
 	}
@@ -177,7 +179,7 @@ func (app *myApplication) onMassQuote(msg massquote.MassQuote, sessionID quickfi
 		return err
 	}
 
-	instrument := IMap.GetBySymbol(symbol)
+	instrument := conf.IMap.GetBySymbol(symbol)
 	if instrument == nil {
 		return quickfix.NewBusinessMessageRejectError("unknown symbol "+symbol, 0, nil)
 	}
@@ -218,13 +220,13 @@ func (app *myApplication) onSecurityDefinitionRequest(msg securitydefinitionrequ
 	app.lock.Lock()
 	defer app.lock.Unlock()
 
-	instrument := IMap.GetBySymbol(symbol)
+	instrument := conf.IMap.GetBySymbol(symbol)
 	if instrument != nil {
 		app.sendInstrument(instrument, reqid, sessionID)
 	} else {
 		app.instrumentID++
-		instrument = NewInstrument(app.instrumentID, symbol)
-		IMap.Put(instrument)
+		instrument = entity.NewInstrument(app.instrumentID, symbol)
+		conf.IMap.Put(instrument)
 		app.sendInstrument(instrument, reqid, sessionID)
 	}
 	return nil
@@ -237,8 +239,8 @@ func (app *myApplication) onSecurityListRequest(msg securitylistrequest.Security
 		return err
 	}
 
-	for _, symbol := range IMap.AllSymbols() {
-		instrument := IMap.GetBySymbol(symbol)
+	for _, symbol := range conf.IMap.AllSymbols() {
+		instrument := conf.IMap.GetBySymbol(symbol)
 		app.sendInstrument(instrument, reqid, sessionID)
 	}
 	app.sendInstrument(endOfDownload, reqid, sessionID)
@@ -246,7 +248,7 @@ func (app *myApplication) onSecurityListRequest(msg securitylistrequest.Security
 	return nil
 }
 
-func (app *myApplication) sendInstrument(instrument Instrument, reqid string, sessionID quickfix.SessionID) {
+func (app *myApplication) sendInstrument(instrument entity.Instrument, reqid string, sessionID quickfix.SessionID) {
 	resid := strconv.Itoa(int(instrument.ID()))
 	restype := enum.SecurityResponseType_ACCEPT_SECURITY_PROPOSAL_WITH_REVISIONS_AS_INDICATED_IN_THE_MESSAGE
 	msg := securitydefinition.New(field.NewSecurityReqID(reqid), field.NewSecurityResponseID(resid), field.NewSecurityResponseType(restype))

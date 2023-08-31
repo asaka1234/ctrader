@@ -1,14 +1,17 @@
-package common
+package conf
 
 import (
 	"bufio"
+	"github.com/robaho/go-trader/entity"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 )
 
 //金融工具(financial instruments)是指在金融市场中可交易的金融资产
+//相当于要处理的所有pair
 
 // global instrument map which is fully synchronized
 var IMap instrumentMap
@@ -16,11 +19,13 @@ var IMap instrumentMap
 type instrumentMap struct {
 	sync.RWMutex
 	id       int64
-	bySymbol map[string]Instrument
-	byID     map[int64]Instrument
+	bySymbol map[string]entity.Instrument //value是一个结构
+	byID     map[int64]entity.Instrument
 }
 
-func (im *instrumentMap) GetBySymbol(symbol string) Instrument {
+//---------------------------------------------------------------
+
+func (im *instrumentMap) GetBySymbol(symbol string) entity.Instrument {
 	im.RLock()
 	defer im.RUnlock()
 
@@ -30,7 +35,7 @@ func (im *instrumentMap) GetBySymbol(symbol string) Instrument {
 	}
 	return i
 }
-func (im *instrumentMap) GetByID(id int64) Instrument {
+func (im *instrumentMap) GetByID(id int64) entity.Instrument {
 	im.RLock()
 	defer im.RUnlock()
 
@@ -56,7 +61,7 @@ func (im *instrumentMap) AllSymbols() []string {
 func (im *instrumentMap) nextID() int64 {
 	return atomic.AddInt64(&im.id, 1)
 }
-func (im *instrumentMap) Put(instrument Instrument) {
+func (im *instrumentMap) Put(instrument entity.Instrument) {
 	im.Lock()
 	defer im.Unlock()
 
@@ -82,9 +87,9 @@ func (im *instrumentMap) Load(filepath string) error {
 			continue
 		}
 		parts := strings.Fields(s)
-		id := ParseInt(parts[0])
+		id, _ := strconv.Atoi(parts[0])
 		if len(parts) == 2 {
-			i := NewInstrument(int64(id), parts[1])
+			i := entity.NewInstrument(int64(id), parts[1])
 			im.Put(i)
 		}
 	}
@@ -92,6 +97,6 @@ func (im *instrumentMap) Load(filepath string) error {
 }
 
 func init() {
-	IMap.bySymbol = make(map[string]Instrument)
-	IMap.byID = make(map[int64]Instrument)
+	IMap.bySymbol = make(map[string]entity.Instrument)
+	IMap.byID = make(map[int64]entity.Instrument)
 }

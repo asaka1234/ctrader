@@ -2,6 +2,7 @@ package common
 
 import (
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/entity"
 	"strconv"
 	"sync"
 )
@@ -40,7 +41,7 @@ const (
 
 type Order struct {
 	sync.RWMutex
-	Instrument
+	entity.Instrument
 	Id         OrderID
 	ExchangeId string
 	Price      Fixed
@@ -64,20 +65,20 @@ func (order *Order) IsActive() bool {
 	return order.OrderState != Filled && order.OrderState != Cancelled && order.OrderState != Rejected
 }
 
-func MarketOrder(instrument Instrument, side Side, quantity Fixed) *Order {
+func MarketOrder(instrument entity.Instrument, side Side, quantity Fixed) *Order {
 	order := newOrder(instrument, side, quantity)
 	order.Price = ZERO
 	order.OrderType = Market
 	return order
 }
 
-func LimitOrder(instrument Instrument, side Side, price Fixed, quantity Fixed) *Order {
+func LimitOrder(instrument entity.Instrument, side Side, price Fixed, quantity Fixed) *Order {
 	order := newOrder(instrument, side, quantity)
 	order.Price = price
 	order.OrderType = Limit
 	return order
 }
-func newOrder(instrument Instrument, side Side, qty Fixed) *Order {
+func newOrder(instrument entity.Instrument, side Side, qty Fixed) *Order {
 	order := new(Order)
 	order.Instrument = instrument
 	order.Side = side

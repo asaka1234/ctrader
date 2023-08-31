@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -75,7 +76,7 @@ func start() {
 		panic(err)
 	}
 
-	instrument := IMap.GetBySymbol(callback.symbol)
+	instrument := conf.IMap.GetBySymbol(callback.symbol)
 	if instrument == nil {
 		log.Fatal("unable symbol", symbol)
 	}
@@ -110,7 +111,7 @@ var exchange ExchangeConnector
 
 type MyAlgo struct {
 	symbol      string
-	instrument  Instrument
+	instrument  entity.Instrument
 	entryPrice  fixed.Fixed
 	offset      fixed.Fixed
 	totalProfit fixed.Fixed
@@ -150,7 +151,7 @@ func (a *MyAlgo) OnBook(book *Book) {
 	}
 }
 
-func (a *MyAlgo) OnInstrument(instrument Instrument) {
+func (a *MyAlgo) OnInstrument(instrument entity.Instrument) {
 	if a.state == preInstrument && instrument.Symbol() == a.symbol {
 		a.instrument = instrument
 		a.state = preEntry

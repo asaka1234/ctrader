@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"github.com/spf13/cobra"
 	"log"
 	"math/rand"
@@ -66,7 +67,7 @@ func (cb *MyCallback) OnBook(book *Book) {
 	}
 }
 
-func (*MyCallback) OnInstrument(instrument Instrument) {
+func (*MyCallback) OnInstrument(instrument entity.Instrument) {
 }
 
 func (*MyCallback) OnOrderStatus(order *Order) {
@@ -119,7 +120,7 @@ func start() {
 		panic(err)
 	}
 
-	instrument := IMap.GetBySymbol(callback.symbol)
+	instrument := conf.IMap.GetBySymbol(callback.symbol)
 	if instrument == nil {
 		log.Fatal("unable symbol", symbol)
 	}

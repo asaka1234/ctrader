@@ -2,6 +2,7 @@ package common
 
 import (
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/entity"
 	"reflect"
 )
 
@@ -11,7 +12,7 @@ type BookLevel struct {
 }
 
 type Book struct {
-	Instrument Instrument
+	Instrument entity.Instrument
 	Bids       []BookLevel
 	Asks       []BookLevel
 	Sequence   uint64

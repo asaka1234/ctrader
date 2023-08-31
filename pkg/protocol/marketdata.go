@@ -2,6 +2,8 @@ package protocol
 
 import (
 	"bytes"
+	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	. "github.com/robaho/go-trader/pkg/common"
 )
 
@@ -24,7 +26,7 @@ func EncodeMarketEvent(w *bytes.Buffer, book *Book, trades []Trade) {
 
 func DecodeMarketEvent(r *bytes.Buffer) (*Book, []Trade) {
 	instrumentId, _ := ReadVarint(r)
-	instrument := IMap.GetByID(instrumentId)
+	instrument := conf.IMap.GetByID(instrumentId)
 
 	if instrument == nil {
 		return nil, nil
@@ -46,7 +48,7 @@ func encodeBook(buf *bytes.Buffer, book *Book) {
 	encodeLevels(buf, book.Asks)
 }
 
-func decodeBook(r *bytes.Buffer, instrument Instrument) *Book {
+func decodeBook(r *bytes.Buffer, instrument entity.Instrument) *Book {
 	book := new(Book)
 
 	sequence, _ := ReadUvarint(r)
@@ -90,7 +92,7 @@ func encodeTrades(buf *bytes.Buffer, trades []Trade) {
 	}
 }
 
-func decodeTrades(r *bytes.Buffer, instrument Instrument) []Trade {
+func decodeTrades(r *bytes.Buffer, instrument entity.Instrument) []Trade {
 	n, _ := r.ReadByte() // read length
 	trades := make([]Trade, n)
 	for i := 0; i < int(n); i++ {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/quickfixgo/fix44/securitydefinition"
 	"github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"strings"
 
 	"github.com/quickfixgo/enum"
@@ -80,9 +82,9 @@ func (app *myApplication) onSecurityDefinition(msg securitydefinition.SecurityDe
 		return nil
 	}
 
-	instrument := NewInstrument(int64(instrumentID), symbol)
+	instrument := entity.NewInstrument(int64(instrumentID), symbol)
 
-	IMap.Put(instrument)
+	conf.IMap.Put(instrument)
 
 	app.c.callback.OnInstrument(instrument)
 
@@ -106,11 +108,11 @@ func (app *myApplication) onExecutionReport(msg executionreport.ExecutionReport,
 		return err
 	}
 
-	var instrument Instrument
+	var instrument entity.Instrument
 	var order *Order
 	var id OrderID
 
-	instrument = IMap.GetBySymbol(symbol)
+	instrument = conf.IMap.GetBySymbol(symbol)
 
 	if strings.HasPrefix(exchangeId, "quote.") {
 		// quote fill

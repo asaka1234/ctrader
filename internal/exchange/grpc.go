@@ -3,6 +3,7 @@ package exchange
 import (
 	"fmt"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/conf"
 	"log"
 	"strconv"
 
@@ -170,8 +171,8 @@ func (s *grpcServer) login(conn protocol.Exchange_ConnectionServer, client *grpc
 }
 func (s *grpcServer) download(conn protocol.Exchange_ConnectionServer, client *grpcClient) {
 	log.Println("downloading...")
-	for _, symbol := range IMap.AllSymbols() {
-		instrument := IMap.GetBySymbol(symbol)
+	for _, symbol := range conf.IMap.AllSymbols() {
+		instrument := conf.IMap.GetBySymbol(symbol)
 		sec := &protocol.OutMessage_Secdef{Secdef: &protocol.SecurityDefinition{Symbol: symbol, InstrumentID: instrument.ID()}}
 		err := conn.Send(&protocol.OutMessage{Reply: sec})
 		if err != nil {
@@ -183,7 +184,7 @@ func (s *grpcServer) download(conn protocol.Exchange_ConnectionServer, client *g
 	log.Println("downloading complete")
 }
 func (s *grpcServer) massquote(server protocol.Exchange_ConnectionServer, client *grpcClient, q *protocol.MassQuoteRequest) error {
-	instrument := IMap.GetBySymbol(q.Symbol)
+	instrument := conf.IMap.GetBySymbol(q.Symbol)
 	if instrument == nil {
 		return errors.New("unknown symbol " + q.Symbol)
 	}
@@ -191,7 +192,7 @@ func (s *grpcServer) massquote(server protocol.Exchange_ConnectionServer, client
 }
 func (s *grpcServer) create(conn protocol.Exchange_ConnectionServer, client *grpcClient, request *protocol.CreateOrderRequest) error {
 
-	instrument := IMap.GetBySymbol(request.Symbol)
+	instrument := conf.IMap.GetBySymbol(request.Symbol)
 	if instrument == nil {
 		reply := &protocol.OutMessage_Reject{Reject: &protocol.SessionReject{Error: "unknown symbol " + request.Symbol}}
 		return conn.Send(&protocol.OutMessage{Reply: reply})

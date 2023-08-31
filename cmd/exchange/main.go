@@ -62,7 +62,7 @@ func start() {
 	//1. 解析配置文件
 	err := conf.ParseConf(config, conf.AppConfig, true)
 	//2. 解析支持的币对
-	err = common.IMap.Load(instruments)
+	err = conf.IMap.Load(instruments)
 	if err != nil {
 		fmt.Println("unable to load instruments", err)
 	}
@@ -175,8 +175,8 @@ func start() {
 			watching.Delete(parts[1])
 			fmt.Println("You are no longer watching ", parts[1])
 		} else if "list" == parts[0] {
-			for _, symbol := range common.IMap.AllSymbols() {
-				instrument := common.IMap.GetBySymbol(symbol)
+			for _, symbol := range conf.IMap.AllSymbols() {
+				instrument := conf.IMap.GetBySymbol(symbol)
 				fmt.Println(instrument)
 			}
 		} else {

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"io"
 	"log"
 	"net"
@@ -135,7 +136,7 @@ func (c *marketDataReceiver) packetReceived(expected uint64, buf []byte) uint64 
 	if pn < expected {
 		// server restart, reset the packet numbers
 		expected = 0
-		lastSequence = make(map[Instrument]uint64)
+		lastSequence = make(map[entity.Instrument]uint64)
 	}
 
 	if expected != 0 && pn != expected {
@@ -149,7 +150,7 @@ func (c *marketDataReceiver) packetReceived(expected uint64, buf []byte) uint64 
 	return pn + 1
 }
 
-var lastSequence = make(map[Instrument]uint64)
+var lastSequence = make(map[entity.Instrument]uint64)
 var seqLock = sync.Mutex{}
 
 func (c *marketDataReceiver) processPacket(packet []byte) {

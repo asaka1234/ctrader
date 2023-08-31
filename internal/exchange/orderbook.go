@@ -2,6 +2,7 @@ package exchange
 
 import (
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/entity"
 	"sync"
 )
 import (
@@ -15,7 +16,7 @@ import (
 
 type orderBook struct {
 	sync.Mutex
-	Instrument
+	entity.Instrument
 	bids []sessionOrder
 	asks []sessionOrder
 }

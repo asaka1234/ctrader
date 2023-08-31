@@ -4,6 +4,7 @@ import (
 	"context"
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	. "github.com/robaho/go-trader/pkg/common"
 	"github.com/robaho/go-trader/pkg/protocol"
 	"google.golang.org/grpc"
@@ -100,9 +101,9 @@ func (c *grpcConnector) Connect() error {
 					continue
 				}
 
-				instrument := NewInstrument(int64(sec.InstrumentID), sec.Symbol)
+				instrument := entity.NewInstrument(int64(sec.InstrumentID), sec.Symbol)
 
-				IMap.Put(instrument)
+				conf.IMap.Put(instrument)
 
 				c.callback.OnInstrument(instrument)
 			case *protocol.OutMessage_Execrpt:
@@ -246,7 +247,7 @@ func (c *grpcConnector) CancelOrder(id OrderID) error {
 	return err
 }
 
-func (c *grpcConnector) Quote(instrument Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
+func (c *grpcConnector) Quote(instrument entity.Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
 
 	if !c.loggedIn.IsTrue() {
 		return NotConnected
@@ -294,7 +295,7 @@ func (c *grpcConnector) handleExecutionReport(rpt *protocol.ExecutionReport) {
 		}
 	}
 
-	instrument := IMap.GetBySymbol(rpt.Symbol)
+	instrument := conf.IMap.GetBySymbol(rpt.Symbol)
 	if instrument == nil {
 		log.Println("unknown symbol in execution report ", rpt.Symbol)
 	}

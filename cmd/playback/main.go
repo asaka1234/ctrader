@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"github.com/spf13/cobra"
 	"os"
 	"strconv"
@@ -100,7 +101,7 @@ func start() {
 		askQty := NewDecimal(parts[4])
 		askPrice := NewDecimal(parts[5])
 
-		instrument := IMap.GetBySymbol(symbol)
+		instrument := conf.IMap.GetBySymbol(symbol)
 		if instrument == nil {
 			fmt.Println("unknown symbol", symbol)
 			continue
@@ -126,7 +127,7 @@ type MyCallback struct {
 func (*MyCallback) OnBook(book *Book) {
 }
 
-func (*MyCallback) OnInstrument(instrument Instrument) {
+func (*MyCallback) OnInstrument(instrument entity.Instrument) {
 }
 
 func (*MyCallback) OnOrderStatus(order *Order) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -91,7 +92,7 @@ var gui *gocui.Gui
 var activeOrderLock = sync.RWMutex{}
 var activeOrders = make(map[OrderID]*Order)
 var exchange ExchangeConnector
-var trackingBook Instrument
+var trackingBook entity.Instrument
 
 type MyCallback struct {
 }
@@ -159,7 +160,7 @@ func vlogln(view string, a ...interface{}) {
 	})
 }
 
-func (MyCallback) OnInstrument(instrument Instrument) {
+func (MyCallback) OnInstrument(instrument entity.Instrument) {
 	vlogf("log", "received instrument %s with id %d\n", instrument.Symbol(), instrument.ID())
 }
 
@@ -214,7 +215,7 @@ func (MyCallback) OnFill(fill *Fill) {
 	}
 }
 
-var lastPrice = map[Instrument]fixed.Fixed{}
+var lastPrice = map[entity.Instrument]fixed.Fixed{}
 
 func (MyCallback) OnTrade(trade *Trade) {
 	color := gocui.ColorWhite
@@ -379,7 +380,7 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 	} else if "quit" == parts[0] {
 		return gocui.ErrQuit
 	} else if ("buy" == parts[0] || "sell" == parts[0]) && (len(parts) == 4 || len(parts) == 3) {
-		instrument := IMap.GetBySymbol(parts[1])
+		instrument := conf.IMap.GetBySymbol(parts[1])
 		if instrument == nil {
 			fmt.Fprintln(v, "unknown instrument", parts[1])
 			goto again
@@ -423,7 +424,7 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 			vlogln("log", "unable to cancel", err)
 		}
 	} else if "book" == parts[0] && len(parts) == 2 {
-		instrument := IMap.GetBySymbol(parts[1])
+		instrument := conf.IMap.GetBySymbol(parts[1])
 		if instrument == nil {
 			fmt.Fprintln(v, "unknown instrument ", parts[1])
 		} else {

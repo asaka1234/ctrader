@@ -3,6 +3,7 @@ package exchange
 import (
 	"fmt"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/entity"
 	"strconv"
 	"strings"
 	"sync"
@@ -37,7 +38,7 @@ type session struct {
 	sync.Mutex
 	id     string
 	orders map[OrderID]*Order
-	quotes map[Instrument]quotePair
+	quotes map[entity.Instrument]quotePair
 	client exchangeClient
 }
 
@@ -60,7 +61,7 @@ func (e *exchange) newSession(client exchangeClient) *session {
 	s := session{}
 	s.id = client.SessionID()
 	s.orders = make(map[OrderID]*Order)
-	s.quotes = make(map[Instrument]quotePair)
+	s.quotes = make(map[entity.Instrument]quotePair)
 	s.client = client
 
 	e.sessions.Store(client, &s)
@@ -81,7 +82,7 @@ func (e *exchange) lockSession(client exchangeClient) *session {
 	return s.(*session)
 }
 
-func (e *exchange) lockOrderBook(instrument Instrument) *orderBook {
+func (e *exchange) lockOrderBook(instrument entity.Instrument) *orderBook {
 	ob, ok := e.orderBooks.Load(instrument)
 	if !ok {
 		ob = &orderBook{Instrument: instrument}
@@ -197,7 +198,7 @@ func (e *exchange) CancelOrder(client exchangeClient, orderId OrderID) error {
 	return nil
 }
 
-func (e *exchange) Quote(client exchangeClient, instrument Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
+func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
 	ob := e.lockOrderBook(instrument)
 	defer ob.Unlock()
 

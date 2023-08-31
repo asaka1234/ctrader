@@ -7,6 +7,7 @@ import (
 	"fmt"
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
 	"golang.org/x/net/ipv4"
 	"log"
 	"net"
@@ -26,7 +27,7 @@ var bookCache sync.Map
 var statsCache sync.Map
 
 var eventChannel chan MarketEvent
-var lastSentBook map[Instrument]uint64 // to avoid publishing exact same book multiple times due to coalescing
+var lastSentBook map[entity.Instrument]uint64 // to avoid publishing exact same book multiple times due to coalescing
 var sequence uint64
 var udpCon *net.UDPConn
 var pUdpCon *ipv4.PacketConn
@@ -81,7 +82,7 @@ func cacheBook(book *Book) {
 	bookCache.Store(book.Instrument, book)
 }
 
-func GetLatestBook(instrument Instrument) *Book {
+func GetLatestBook(instrument entity.Instrument) *Book {
 	v, ok := bookCache.Load(instrument)
 	if !ok {
 		return nil
@@ -90,7 +91,7 @@ func GetLatestBook(instrument Instrument) *Book {
 }
 
 func GetBook(symbol string) *Book {
-	i := IMap.GetBySymbol(symbol)
+	i := conf.IMap.GetBySymbol(symbol)
 	if i == nil {
 		return nil
 	}
@@ -114,7 +115,7 @@ func newBuffer() *bytes.Buffer {
 }
 
 func publish() {
-	stats := make(map[Instrument]*Statistics)
+	stats := make(map[entity.Instrument]*Statistics)
 
 	buf := newBuffer()
 
@@ -199,7 +200,7 @@ func getLatestBook(book *Book) *Book {
 	return book
 }
 
-func getStatistics(instrument Instrument) *Statistics {
+func getStatistics(instrument entity.Instrument) *Statistics {
 	stats, ok := statsCache.Load(instrument)
 	if ok {
 		return stats.(*Statistics)
@@ -245,7 +246,7 @@ func sendPacket(data []byte) {
 // 感觉是推送行情数据
 func startMarketData() {
 	eventChannel = make(chan MarketEvent, 1000)
-	lastSentBook = make(map[Instrument]uint64)
+	lastSentBook = make(map[entity.Instrument]uint64)
 
 	// read settings and create socket
 	saddr := conf.AppConfig.MulticastAddr

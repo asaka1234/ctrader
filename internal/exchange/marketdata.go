@@ -218,7 +218,7 @@ func coalesceTrades(trades []trade) []Trade {
 			Trades[last].Quantity = Trades[last].Quantity.Add(v.quantity)
 			continue
 		}
-		exchangeID := strconv.FormatInt(v.tradeid, 10)
+		exchangeID := strconv.FormatInt(v.tradeId, 10)
 		t := Trade{Instrument: v.seller.order.Instrument, Price: v.price, Quantity: v.quantity, ExchangeID: exchangeID, TradeTime: v.when}
 		Trades = append(Trades, t)
 		last = len(Trades) - 1

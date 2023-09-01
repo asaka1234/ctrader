@@ -27,7 +27,7 @@ type trade struct {
 	seller   sessionOrder
 	price    Fixed
 	quantity Fixed
-	tradeid  int64
+	tradeId  int64
 	when     time.Time
 
 	buyRemaining  Fixed
@@ -112,7 +112,7 @@ func matchTrades(book *orderBook) []trade {
 		trade.quantity = qty
 		trade.buyer = bid
 		trade.seller = ask
-		trade.tradeid = tradeID
+		trade.tradeId = tradeID
 		trade.when = when
 
 		fill(bid.order, qty, price)

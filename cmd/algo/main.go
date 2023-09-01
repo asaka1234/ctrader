@@ -163,6 +163,7 @@ func (a *MyAlgo) OnInstrument(instrument entity.Instrument) {
 func (*MyAlgo) OnOrderStatus(order *entity.Order) {
 }
 
+// fill 成交，  kill 取消
 func (a *MyAlgo) OnFill(fill *Fill) {
 	if a.state == waitBuy {
 		a.entryPrice = fill.Price

@@ -14,26 +14,25 @@ import (
 	. "github.com/robaho/go-trader/pkg/common"
 )
 
-type sessionOrder struct {
-	client exchangeClient
-	order  *entity.Order
-	time   time.Time
-}
+// ------------------------------------------------------
+//TODO 作用是什么?
 
 type quotePair struct {
 	bid sessionOrder
 	ask sessionOrder
 }
 
-func (so sessionOrder) String() string {
-	return fmt.Sprint(so.client.SessionID(), so.order)
-}
+// ------------------------------------------------------
+//TODO 作用是什么?
 
 type exchangeClient interface {
 	SendOrderStatus(so sessionOrder)
 	SendTrades(trades []trade)
 	SessionID() string
 }
+
+// ------------------------------------------------------
+//TODO 作用是什么?
 
 type session struct {
 	sync.Mutex
@@ -43,19 +42,42 @@ type session struct {
 	client exchangeClient
 }
 
-var buyMarketPrice = NewDecimal("9999999999999")
-var sellMarketPrice = ZERO
+// ------------------------------------------------------
+//TODO 作用是什么?
+
+type sessionOrder struct {
+	client exchangeClient
+	order  *entity.Order
+	time   time.Time
+}
+
+func (so sessionOrder) String() string {
+	return fmt.Sprint(so.client.SessionID(), so.order)
+}
 
 // return the "effective price" of an order - so market orders can always be at the top
 func (so *sessionOrder) getPrice() Fixed {
 	if so.order.OrderType == constant.Market {
 		if so.order.OrderSide == constant.Buy {
-			return buyMarketPrice
+			return NewDecimal("9999999999999")
 		} else {
-			return sellMarketPrice
+			return ZERO
 		}
 	}
 	return so.order.Price
+}
+
+// -----------------------------------------------------------
+// 交易引擎
+
+var TheExchange exchange
+
+type exchange struct {
+	connected  bool
+	callbacks  []ConnectorCallback
+	orderBooks sync.Map // map of Instrument to *orderBook
+	sessions   sync.Map // map of string to session
+	nextOrder  int32
 }
 
 func (e *exchange) newSession(client exchangeClient) *session {
@@ -92,14 +114,6 @@ func (e *exchange) lockOrderBook(instrument entity.Instrument) *orderBook {
 	_ob := ob.(*orderBook)
 	_ob.Lock()
 	return _ob
-}
-
-type exchange struct {
-	connected  bool
-	callbacks  []ConnectorCallback
-	orderBooks sync.Map // map of Instrument to *orderBook
-	sessions   sync.Map // map of string to session
-	nextOrder  int32
 }
 
 // 上游传过来一个order, 需要撮合和发送出去
@@ -250,8 +264,6 @@ func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bi
 	return nil
 }
 
-var TheExchange exchange
-
 func (e *exchange) ListSessions() string {
 	var s []string
 
@@ -261,6 +273,7 @@ func (e *exchange) ListSessions() string {
 	})
 	return strings.Join(s, ",")
 }
+
 func (e *exchange) SessionDisconnect(client exchangeClient) {
 	orderCount := 0
 	quoteCount := 0
@@ -287,6 +300,7 @@ func (e *exchange) SessionDisconnect(client exchangeClient) {
 	}
 	fmt.Println("session", client.SessionID(), "disconnected, cancelled", orderCount, "orders", quoteCount, "quotes")
 }
+
 func (e *exchange) Start() {
 	startMarketData()
 }

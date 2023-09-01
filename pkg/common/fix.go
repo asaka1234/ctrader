@@ -15,7 +15,7 @@ func ToDecimal(f Fixed) decimal.Decimal {
 	return decimal.NewFromFloat(f.Float())
 }
 
-func MapToFixSide(side constant.Side) enum.Side {
+func MapToFixSide(side constant.OrderSide) enum.Side {
 	switch side {
 	case constant.Buy:
 		return enum.Side_BUY
@@ -25,7 +25,7 @@ func MapToFixSide(side constant.Side) enum.Side {
 	panic("unsupported side " + side)
 }
 
-func MapFromFixSide(side enum.Side) constant.Side {
+func MapFromFixSide(side enum.Side) constant.OrderSide {
 	switch side {
 	case enum.Side_BUY:
 		return constant.Buy

@@ -2,13 +2,13 @@ package constant
 
 //-----------订单的状态--------------
 
-type Side string
+type OrderSide string
 type OrderState string
 type OrderType string
 
 const (
-	Buy  Side = "buy"
-	Sell Side = "sell"
+	Buy  OrderSide = "buy"
+	Sell OrderSide = "sell"
 )
 
 const (

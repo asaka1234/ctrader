@@ -193,7 +193,7 @@ func (c *grpcConnector) CreateOrder(order *entity.Order) (entity.OrderID, error)
 	case constant.Limit:
 		co.OrderType = protocol.CreateOrderRequest_Limit
 	}
-	switch order.Side {
+	switch order.OrderSide {
 	case constant.Buy:
 		co.OrderSide = protocol.CreateOrderRequest_Buy
 	case constant.Sell:
@@ -332,7 +332,7 @@ func (c *grpcConnector) handleExecutionReport(rpt *protocol.ExecutionReport) {
 		lastPx := NewF(rpt.LastPrice)
 		lastQty := NewF(rpt.LastQuantity)
 
-		var side constant.Side
+		var side constant.OrderSide
 		if rpt.Side == protocol.CreateOrderRequest_Buy {
 			side = constant.Buy
 		} else {

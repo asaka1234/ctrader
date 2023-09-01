@@ -161,7 +161,7 @@ func (c *qfixConnector) CreateOrder(order *entity.Order) (entity.OrderID, error)
 		ordtype = field.NewOrdType(enum.OrdType_MARKET)
 	}
 
-	fixOrder := newordersingle.New(field.NewClOrdID(orderID.String()), field.NewSide(MapToFixSide(order.Side)), field.NewTransactTime(time.Now()), ordtype)
+	fixOrder := newordersingle.New(field.NewClOrdID(orderID.String()), field.NewSide(MapToFixSide(order.OrderSide)), field.NewTransactTime(time.Now()), ordtype)
 	fixOrder.SetSymbol(order.Instrument.Symbol())
 	fixOrder.SetOrderQty(ToDecimal(order.Quantity), 4)
 	fixOrder.SetPrice(ToDecimal(order.Price), 4)
@@ -186,7 +186,7 @@ func (c *qfixConnector) ModifyOrder(id entity.OrderID, price Fixed, quantity Fix
 	var ordtype = field.NewOrdType(enum.OrdType_LIMIT)
 
 	// the GOX allows re-using of ClOrdID, similar to CME
-	msg := ordercancelreplacerequest.New(field.NewOrigClOrdID(id.String()), field.NewClOrdID(id.String()), field.NewSide(MapToFixSide(order.Side)), field.NewTransactTime(time.Now()), ordtype)
+	msg := ordercancelreplacerequest.New(field.NewOrigClOrdID(id.String()), field.NewClOrdID(id.String()), field.NewSide(MapToFixSide(order.OrderSide)), field.NewTransactTime(time.Now()), ordtype)
 
 	msg.SetSymbol(order.Instrument.Symbol())
 	msg.SetOrderQty(ToDecimal(order.Quantity), 4)
@@ -206,7 +206,7 @@ func (c *qfixConnector) CancelOrder(id entity.OrderID) error {
 	order.Lock()
 	defer order.Unlock()
 
-	msg := ordercancelrequest.New(field.NewOrigClOrdID(id.String()), field.NewClOrdID(id.String()), field.NewSide(MapToFixSide(order.Side)), field.NewTransactTime(time.Now()))
+	msg := ordercancelrequest.New(field.NewOrigClOrdID(id.String()), field.NewClOrdID(id.String()), field.NewSide(MapToFixSide(order.OrderSide)), field.NewTransactTime(time.Now()))
 
 	return quickfix.SendToTarget(msg, c.sessionID)
 }

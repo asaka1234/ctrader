@@ -9,13 +9,7 @@ import (
 
 type OrderID int32
 
-func (id OrderID) String() string {
-	return strconv.Itoa(int(id))
-}
-func NewOrderID(id string) OrderID {
-	i, _ := strconv.Atoi(id)
-	return OrderID(i)
-}
+//-------------------------------------------
 
 type Order struct {
 	sync.RWMutex
@@ -23,7 +17,7 @@ type Order struct {
 	Id         OrderID
 	ExchangeId string
 	Price      Fixed
-	constant.Side
+	constant.OrderSide
 	Quantity  Fixed
 	Remaining Fixed
 	constant.OrderType
@@ -43,25 +37,35 @@ func (order *Order) IsActive() bool {
 	return order.OrderState != constant.Filled && order.OrderState != constant.Cancelled && order.OrderState != constant.Rejected
 }
 
-func MarketOrder(instrument Instrument, side constant.Side, quantity Fixed) *Order {
+func MarketOrder(instrument Instrument, side constant.OrderSide, quantity Fixed) *Order {
 	order := newOrder(instrument, side, quantity)
 	order.Price = ZERO
 	order.OrderType = constant.Market
 	return order
 }
 
-func LimitOrder(instrument Instrument, side constant.Side, price Fixed, quantity Fixed) *Order {
+func LimitOrder(instrument Instrument, side constant.OrderSide, price Fixed, quantity Fixed) *Order {
 	order := newOrder(instrument, side, quantity)
 	order.Price = price
 	order.OrderType = constant.Limit
 	return order
 }
-func newOrder(instrument Instrument, side constant.Side, qty Fixed) *Order {
+func newOrder(instrument Instrument, side constant.OrderSide, qty Fixed) *Order {
 	order := new(Order)
 	order.Instrument = instrument
-	order.Side = side
+	order.OrderSide = side
 	order.Quantity = qty
 	order.Remaining = qty
 	order.OrderState = constant.New
 	return order
+}
+
+//---------工具------------------------------
+
+func (id OrderID) String() string {
+	return strconv.Itoa(int(id))
+}
+func NewOrderID(id string) OrderID {
+	i, _ := strconv.Atoi(id)
+	return OrderID(i)
 }

@@ -49,7 +49,7 @@ var sellMarketPrice = ZERO
 // return the "effective price" of an order - so market orders can always be at the top
 func (so *sessionOrder) getPrice() Fixed {
 	if so.order.OrderType == constant.Market {
-		if so.order.Side == constant.Buy {
+		if so.order.OrderSide == constant.Buy {
 			return buyMarketPrice
 		} else {
 			return sellMarketPrice

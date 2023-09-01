@@ -48,7 +48,7 @@ func (c *grpcClient) SendOrderStatus(so sessionOrder) {
 	rpt.Quantity = ToFloat(so.order.Quantity)
 	rpt.Price = ToFloat(so.order.Price)
 	rpt.Remaining = ToFloat(so.order.Remaining)
-	if so.order.Side == constant.Buy {
+	if so.order.OrderSide == constant.Buy {
 		rpt.Side = protocol.CreateOrderRequest_Buy
 	} else {
 		rpt.Side = protocol.CreateOrderRequest_Sell
@@ -82,7 +82,7 @@ func (c *grpcClient) sendTradeExecutionReport(so sessionOrder, price Fixed, quan
 	rpt.Price = ToFloat(so.order.Price)
 	rpt.LastPrice = ToFloat(price)
 	rpt.LastQuantity = ToFloat(quantity)
-	if so.order.Side == constant.Buy {
+	if so.order.OrderSide == constant.Buy {
 		rpt.Side = protocol.CreateOrderRequest_Buy
 	} else {
 		rpt.Side = protocol.CreateOrderRequest_Sell
@@ -201,7 +201,7 @@ func (s *grpcServer) create(conn protocol.Exchange_ConnectionServer, client *grp
 	}
 
 	var order *entity.Order
-	var side constant.Side
+	var side constant.OrderSide
 
 	if request.OrderSide == protocol.CreateOrderRequest_Buy {
 		side = constant.Buy

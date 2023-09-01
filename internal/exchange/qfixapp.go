@@ -271,7 +271,7 @@ func (app *myApplication) sendTradeExecutionReport(so sessionOrder, price Fixed,
 		ordStatus = enum.OrdStatus_PARTIALLY_FILLED
 	}
 
-	var side = MapToFixSide(order.Side)
+	var side = MapToFixSide(order.OrderSide)
 
 	msg := executionreport.New(field.NewOrderID(order.ExchangeId),
 		field.NewExecID(order.ExchangeId),
@@ -295,7 +295,7 @@ func (app *myApplication) sendExecutionReport(execType enum.ExecType, so session
 
 	order := so.order
 
-	var side = MapToFixSide(order.Side)
+	var side = MapToFixSide(order.OrderSide)
 
 	msg := executionreport.New(field.NewOrderID(order.ExchangeId),
 		field.NewExecID(order.ExchangeId),

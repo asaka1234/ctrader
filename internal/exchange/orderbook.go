@@ -42,7 +42,7 @@ func (ob *orderBook) add(so sessionOrder) ([]trade, error) {
 	so.order.OrderState = constant.Booked
 
 	//先把新的order加入到orderbook里
-	if so.order.Side == constant.Buy {
+	if so.order.OrderSide == constant.Buy {
 		ob.bids = insertSort(ob.bids, so, 1)
 	} else {
 		ob.asks = insertSort(ob.asks, so, -1)
@@ -156,7 +156,7 @@ func (ob *orderBook) remove(so sessionOrder) error {
 		return false
 	}
 
-	if so.order.Side == constant.Buy {
+	if so.order.OrderSide == constant.Buy {
 		removed = removeFN(&ob.bids, so)
 	} else {
 		removed = removeFN(&ob.asks, so)

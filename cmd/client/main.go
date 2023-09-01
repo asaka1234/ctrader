@@ -187,7 +187,7 @@ func (MyCallback) OnOrderStatus(order *entity.Order) {
 		defer activeOrderLock.Unlock()
 		for _, order := range activeOrders {
 			color := gocui.ColorGreen
-			if order.Side == constant.Sell {
+			if order.OrderSide == constant.Sell {
 				color = gocui.ColorRed
 			}
 			v.FgColor = color
@@ -196,7 +196,7 @@ func (MyCallback) OnOrderStatus(order *entity.Order) {
 			if !order.Remaining.Equal(order.Quantity) {
 				qty = qty + " (" + order.Quantity.String() + ")"
 			}
-			fmt.Fprintf(v, "%5d %10s %5s %10s @ %10s\n", order.Id, order.Instrument.Symbol(), order.Side, qty, order.Price.StringN(2))
+			fmt.Fprintf(v, "%5d %10s %5s %10s @ %10s\n", order.Id, order.Instrument.Symbol(), order.OrderSide, qty, order.Price.StringN(2))
 			v.FgColor = gocui.ColorDefault
 		}
 		return err
@@ -388,7 +388,7 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 		}
 		qty := NewDecimal(parts[2])
 
-		var side constant.Side
+		var side constant.OrderSide
 		if "buy" == parts[0] {
 			side = constant.Buy
 		} else if "sell" == parts[0] {

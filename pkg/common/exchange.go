@@ -38,7 +38,7 @@ type Fill struct {
 	ExchangeID string
 	Quantity   Fixed
 	Price      Fixed
-	Side       constant.Side
+	Side       constant.OrderSide
 	IsLegTrade bool
 }
 

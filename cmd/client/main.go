@@ -5,6 +5,7 @@ import (
 	"github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
 	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -90,7 +91,7 @@ func start() {
 
 var gui *gocui.Gui
 var activeOrderLock = sync.RWMutex{}
-var activeOrders = make(map[OrderID]*Order)
+var activeOrders = make(map[entity.OrderID]*entity.Order)
 var exchange ExchangeConnector
 var trackingBook entity.Instrument
 
@@ -164,7 +165,7 @@ func (MyCallback) OnInstrument(instrument entity.Instrument) {
 	vlogf("log", "received instrument %s with id %d\n", instrument.Symbol(), instrument.ID())
 }
 
-func (MyCallback) OnOrderStatus(order *Order) {
+func (MyCallback) OnOrderStatus(order *entity.Order) {
 	if order.IsActive() {
 		activeOrderLock.Lock()
 		defer activeOrderLock.Unlock()
@@ -186,7 +187,7 @@ func (MyCallback) OnOrderStatus(order *Order) {
 		defer activeOrderLock.Unlock()
 		for _, order := range activeOrders {
 			color := gocui.ColorGreen
-			if order.Side == Sell {
+			if order.Side == constant.Sell {
 				color = gocui.ColorRed
 			}
 			v.FgColor = color
@@ -205,7 +206,7 @@ func (MyCallback) OnOrderStatus(order *Order) {
 
 func (MyCallback) OnFill(fill *Fill) {
 	color := gocui.ColorGreen
-	if fill.Side == Sell {
+	if fill.Side == constant.Sell {
 		color = gocui.ColorRed
 	}
 	if fill.IsQuote {
@@ -387,11 +388,11 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 		}
 		qty := NewDecimal(parts[2])
 
-		var side Side
+		var side constant.Side
 		if "buy" == parts[0] {
-			side = Buy
+			side = constant.Buy
 		} else if "sell" == parts[0] {
-			side = Sell
+			side = constant.Sell
 		} else {
 			fmt.Fprintln(v, "incorrect buy/sell type", parts[1])
 			goto again
@@ -399,10 +400,10 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 		var err error
 		if len(parts) == 4 {
 			price := NewDecimal(parts[3])
-			order := LimitOrder(instrument, side, price, qty)
+			order := entity.LimitOrder(instrument, side, price, qty)
 			_, err = exchange.CreateOrder(order)
 		} else {
-			order := MarketOrder(instrument, side, qty)
+			order := entity.MarketOrder(instrument, side, qty)
 			_, err = exchange.CreateOrder(order)
 		}
 		if err != nil {
@@ -410,7 +411,7 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 		}
 
 	} else if "modify" == parts[0] && len(parts) == 4 {
-		orderID := NewOrderID(parts[1])
+		orderID := entity.NewOrderID(parts[1])
 		qty := NewDecimal(parts[2])
 		price := NewDecimal(parts[3])
 		err := exchange.ModifyOrder(orderID, price, qty)
@@ -418,7 +419,7 @@ func processCommand(g *gocui.Gui, v *gocui.View) error {
 			vlogln("log", "unable to modify", err)
 		}
 	} else if "cancel" == parts[0] && len(parts) == 2 {
-		orderID := NewOrderID(parts[1])
+		orderID := entity.NewOrderID(parts[1])
 		err := exchange.CancelOrder(orderID)
 		if err != nil {
 			vlogln("log", "unable to cancel", err)

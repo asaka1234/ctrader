@@ -5,6 +5,7 @@ import (
 	"github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
 	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -133,7 +134,7 @@ func (a *MyAlgo) OnBook(book *Book) {
 			return
 		}
 		if book.HasAsks() {
-			exchange.CreateOrder(LimitOrder(a.instrument, Buy, book.Asks[0].Price, NewDecimal("1")))
+			exchange.CreateOrder(entity.LimitOrder(a.instrument, constant.Buy, book.Asks[0].Price, NewDecimal("1")))
 			a.state = waitBuy
 			a.runs++
 		}
@@ -141,10 +142,10 @@ func (a *MyAlgo) OnBook(book *Book) {
 		if book.HasBids() {
 			price := book.Bids[0].Price
 			if price.GreaterThanOrEqual(a.entryPrice.Add(a.offset)) { // exit winner
-				exchange.CreateOrder(MarketOrder(a.instrument, Sell, NewDecimal("1")))
+				exchange.CreateOrder(entity.MarketOrder(a.instrument, constant.Sell, NewDecimal("1")))
 				a.state = waitSell
 			} else if price.LessThanOrEqual(a.entryPrice.Sub(a.offset)) { // exit loser ( 2 x the offset )
-				exchange.CreateOrder(MarketOrder(a.instrument, Sell, NewDecimal("1")))
+				exchange.CreateOrder(entity.MarketOrder(a.instrument, constant.Sell, NewDecimal("1")))
 				a.state = waitSell
 			}
 		}
@@ -159,7 +160,7 @@ func (a *MyAlgo) OnInstrument(instrument entity.Instrument) {
 	}
 }
 
-func (*MyAlgo) OnOrderStatus(order *Order) {
+func (*MyAlgo) OnOrderStatus(order *entity.Order) {
 }
 
 func (a *MyAlgo) OnFill(fill *Fill) {

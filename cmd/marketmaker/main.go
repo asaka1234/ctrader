@@ -70,7 +70,7 @@ func (cb *MyCallback) OnBook(book *Book) {
 func (*MyCallback) OnInstrument(instrument entity.Instrument) {
 }
 
-func (*MyCallback) OnOrderStatus(order *Order) {
+func (*MyCallback) OnOrderStatus(order *entity.Order) {
 }
 
 func (*MyCallback) OnFill(fill *Fill) {

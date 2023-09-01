@@ -4,6 +4,7 @@ import (
 	"fmt"
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,7 +16,7 @@ import (
 
 type sessionOrder struct {
 	client exchangeClient
-	order  *Order
+	order  *entity.Order
 	time   time.Time
 }
 
@@ -37,7 +38,7 @@ type exchangeClient interface {
 type session struct {
 	sync.Mutex
 	id     string
-	orders map[OrderID]*Order
+	orders map[entity.OrderID]*entity.Order
 	quotes map[entity.Instrument]quotePair
 	client exchangeClient
 }
@@ -47,8 +48,8 @@ var sellMarketPrice = ZERO
 
 // return the "effective price" of an order - so market orders can always be at the top
 func (so *sessionOrder) getPrice() Fixed {
-	if so.order.OrderType == Market {
-		if so.order.Side == Buy {
+	if so.order.OrderType == constant.Market {
+		if so.order.Side == constant.Buy {
 			return buyMarketPrice
 		} else {
 			return sellMarketPrice
@@ -60,7 +61,7 @@ func (so *sessionOrder) getPrice() Fixed {
 func (e *exchange) newSession(client exchangeClient) *session {
 	s := session{}
 	s.id = client.SessionID()
-	s.orders = make(map[OrderID]*Order)
+	s.orders = make(map[entity.OrderID]*entity.Order)
 	s.quotes = make(map[entity.Instrument]quotePair)
 	s.client = client
 
@@ -102,7 +103,7 @@ type exchange struct {
 }
 
 // 上游传过来一个order, 需要撮合和发送出去
-func (e *exchange) CreateOrder(client exchangeClient, order *Order) (OrderID, error) {
+func (e *exchange) CreateOrder(client exchangeClient, order *entity.Order) (entity.OrderID, error) {
 	//拿到orderbook
 	ob := e.lockOrderBook(order.Instrument)
 	defer ob.Unlock()
@@ -131,14 +132,14 @@ func (e *exchange) CreateOrder(client exchangeClient, order *Order) (OrderID, er
 	//对撮合的结果做push推送
 	sendMarketData(MarketEvent{book, trades})
 	client.SendTrades(trades)
-	if len(trades) == 0 || order.OrderState == Cancelled {
+	if len(trades) == 0 || order.OrderState == constant.Cancelled {
 		client.SendOrderStatus(so)
 	}
 
 	return orderID, nil
 }
 
-func (e *exchange) ModifyOrder(client exchangeClient, orderId OrderID, price Fixed, quantity Fixed) error {
+func (e *exchange) ModifyOrder(client exchangeClient, orderId entity.OrderID, price Fixed, quantity Fixed) error {
 	s := e.lockSession(client)
 	defer s.Unlock()
 
@@ -175,7 +176,7 @@ func (e *exchange) ModifyOrder(client exchangeClient, orderId OrderID, price Fix
 	return nil
 }
 
-func (e *exchange) CancelOrder(client exchangeClient, orderId OrderID) error {
+func (e *exchange) CancelOrder(client exchangeClient, orderId entity.OrderID) error {
 	s := e.lockSession(client)
 	defer s.Unlock()
 
@@ -220,7 +221,7 @@ func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bi
 	}
 	var trades []trade
 	if !bidPrice.IsZero() {
-		order := LimitOrder(instrument, Buy, bidPrice, bidQuantity)
+		order := entity.LimitOrder(instrument, constant.Buy, bidPrice, bidQuantity)
 		order.ExchangeId = "quote.bid." + strconv.FormatInt(instrument.ID(), 10)
 		so := sessionOrder{client, order, time.Now()}
 		qp.bid = so
@@ -230,7 +231,7 @@ func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bi
 		}
 	}
 	if !askPrice.IsZero() {
-		order := LimitOrder(instrument, Sell, askPrice, askQuantity)
+		order := entity.LimitOrder(instrument, constant.Sell, askPrice, askQuantity)
 		order.ExchangeId = "quote.ask." + strconv.FormatInt(instrument.ID(), 10)
 		so := sessionOrder{client, order, time.Now()}
 		qp.ask = so

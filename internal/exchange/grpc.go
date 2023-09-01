@@ -4,6 +4,8 @@ import (
 	"fmt"
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/conf"
+	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"log"
 	"strconv"
 
@@ -30,15 +32,15 @@ func (c *grpcClient) SendOrderStatus(so sessionOrder) {
 	rpt.ExOrdId = so.order.ExchangeId
 	rpt.ReportType = protocol.ExecutionReport_Status
 	switch so.order.OrderState {
-	case New, Booked:
+	case constant.New, constant.Booked:
 		rpt.OrderState = protocol.ExecutionReport_Booked
-	case PartialFill:
+	case constant.PartialFill:
 		rpt.OrderState = protocol.ExecutionReport_Partial
-	case Filled:
+	case constant.Filled:
 		rpt.OrderState = protocol.ExecutionReport_Filled
-	case Cancelled:
+	case constant.Cancelled:
 		rpt.OrderState = protocol.ExecutionReport_Cancelled
-	case Rejected:
+	case constant.Rejected:
 		rpt.OrderState = protocol.ExecutionReport_Rejected
 	}
 	rpt.RejectReason = so.order.RejectReason
@@ -46,7 +48,7 @@ func (c *grpcClient) SendOrderStatus(so sessionOrder) {
 	rpt.Quantity = ToFloat(so.order.Quantity)
 	rpt.Price = ToFloat(so.order.Price)
 	rpt.Remaining = ToFloat(so.order.Remaining)
-	if so.order.Side == Buy {
+	if so.order.Side == constant.Buy {
 		rpt.Side = protocol.CreateOrderRequest_Buy
 	} else {
 		rpt.Side = protocol.CreateOrderRequest_Sell
@@ -80,21 +82,21 @@ func (c *grpcClient) sendTradeExecutionReport(so sessionOrder, price Fixed, quan
 	rpt.Price = ToFloat(so.order.Price)
 	rpt.LastPrice = ToFloat(price)
 	rpt.LastQuantity = ToFloat(quantity)
-	if so.order.Side == Buy {
+	if so.order.Side == constant.Buy {
 		rpt.Side = protocol.CreateOrderRequest_Buy
 	} else {
 		rpt.Side = protocol.CreateOrderRequest_Sell
 	}
 	switch so.order.OrderState {
-	case New, Booked:
+	case constant.New, constant.Booked:
 		rpt.OrderState = protocol.ExecutionReport_Booked
-	case PartialFill:
+	case constant.PartialFill:
 		rpt.OrderState = protocol.ExecutionReport_Partial
-	case Filled:
+	case constant.Filled:
 		rpt.OrderState = protocol.ExecutionReport_Filled
-	case Cancelled:
+	case constant.Cancelled:
 		rpt.OrderState = protocol.ExecutionReport_Cancelled
-	case Rejected:
+	case constant.Rejected:
 		rpt.OrderState = protocol.ExecutionReport_Rejected
 	}
 
@@ -198,32 +200,32 @@ func (s *grpcServer) create(conn protocol.Exchange_ConnectionServer, client *grp
 		return conn.Send(&protocol.OutMessage{Reply: reply})
 	}
 
-	var order *Order
-	var side Side
+	var order *entity.Order
+	var side constant.Side
 
 	if request.OrderSide == protocol.CreateOrderRequest_Buy {
-		side = Buy
+		side = constant.Buy
 	} else {
-		side = Sell
+		side = constant.Sell
 	}
 
 	if request.OrderType == protocol.CreateOrderRequest_Limit {
-		order = LimitOrder(instrument, side, NewDecimalF(request.Price), NewDecimalF(request.Quantity))
+		order = entity.LimitOrder(instrument, side, NewDecimalF(request.Price), NewDecimalF(request.Quantity))
 	} else {
-		order = MarketOrder(instrument, side, NewDecimalF(request.Quantity))
+		order = entity.MarketOrder(instrument, side, NewDecimalF(request.Quantity))
 	}
-	order.Id = NewOrderID(strconv.Itoa(int(request.ClOrdId)))
+	order.Id = entity.NewOrderID(strconv.Itoa(int(request.ClOrdId)))
 	s.e.CreateOrder(client, order)
 	return nil
 }
 func (s *grpcServer) modify(server protocol.Exchange_ConnectionServer, client *grpcClient, request *protocol.ModifyOrderRequest) error {
 	price := NewDecimalF(request.Price)
 	qty := NewDecimalF(request.Quantity)
-	s.e.ModifyOrder(client, NewOrderID(strconv.Itoa(int(request.ClOrdId))), price, qty)
+	s.e.ModifyOrder(client, entity.NewOrderID(strconv.Itoa(int(request.ClOrdId))), price, qty)
 	return nil
 }
 func (s *grpcServer) cancel(server protocol.Exchange_ConnectionServer, client *grpcClient, request *protocol.CancelOrderRequest) error {
-	s.e.CancelOrder(client, NewOrderID(strconv.Itoa(int(request.ClOrdId))))
+	s.e.CancelOrder(client, entity.NewOrderID(strconv.Itoa(int(request.ClOrdId))))
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"time"
 )
 
@@ -12,9 +13,9 @@ type ExchangeConnector interface {
 	Connect() error
 	Disconnect() error
 
-	CreateOrder(order *Order) (OrderID, error)
-	ModifyOrder(order OrderID, price Fixed, quantity Fixed) error
-	CancelOrder(order OrderID) error
+	CreateOrder(order *entity.Order) (entity.OrderID, error)
+	ModifyOrder(order entity.OrderID, price Fixed, quantity Fixed) error
+	CancelOrder(order entity.OrderID) error
 
 	Quote(instrument entity.Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error
 
@@ -33,11 +34,11 @@ type Fill struct {
 	Instrument entity.Instrument
 	IsQuote    bool
 	// Order will be nil on quote trade, the order is unlocked
-	Order      *Order
+	Order      *entity.Order
 	ExchangeID string
 	Quantity   Fixed
 	Price      Fixed
-	Side       Side
+	Side       constant.Side
 	IsLegTrade bool
 }
 
@@ -55,7 +56,7 @@ type ConnectorCallback interface {
 	// the following is for intra-day instrument addition, or initial startup
 	OnInstrument(entity.Instrument)
 	// the callback will have the order locked, and will unlock when the callback returns
-	OnOrderStatus(*Order)
+	OnOrderStatus(*entity.Order)
 	OnFill(*Fill)
 	OnTrade(*Trade)
 }

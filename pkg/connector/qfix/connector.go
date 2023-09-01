@@ -5,6 +5,7 @@ import (
 	"github.com/quickfixgo/fix44/securitylistrequest"
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"io"
 	"os"
 	"strconv"
@@ -138,25 +139,25 @@ func (c *qfixConnector) DownloadInstruments() error {
 	return nil
 }
 
-func (c *qfixConnector) CreateOrder(order *Order) (OrderID, error) {
+func (c *qfixConnector) CreateOrder(order *entity.Order) (entity.OrderID, error) {
 	if !c.loggedIn.IsTrue() {
 		return -1, NotConnected
 	}
 
-	if order.OrderType != Limit && order.OrderType != Market {
+	if order.OrderType != constant.Limit && order.OrderType != constant.Market {
 		return -1, UnsupportedOrderType
 	}
 
 	c.nextOrder = c.nextOrder + 1
 
-	var orderID = OrderID(c.nextOrder)
+	var orderID = entity.OrderID(c.nextOrder)
 
 	c.orders.Store(orderID, order)
 
 	order.Id = orderID
 
 	var ordtype = field.NewOrdType(enum.OrdType_LIMIT)
-	if order.OrderType == Market {
+	if order.OrderType == constant.Market {
 		ordtype = field.NewOrdType(enum.OrdType_MARKET)
 	}
 
@@ -168,7 +169,7 @@ func (c *qfixConnector) CreateOrder(order *Order) (OrderID, error) {
 	return orderID, quickfix.SendToTarget(fixOrder, c.sessionID)
 }
 
-func (c *qfixConnector) ModifyOrder(id OrderID, price Fixed, quantity Fixed) error {
+func (c *qfixConnector) ModifyOrder(id entity.OrderID, price Fixed, quantity Fixed) error {
 	if !c.loggedIn.IsTrue() {
 		return NotConnected
 	}
@@ -194,7 +195,7 @@ func (c *qfixConnector) ModifyOrder(id OrderID, price Fixed, quantity Fixed) err
 	return quickfix.SendToTarget(msg, c.sessionID)
 }
 
-func (c *qfixConnector) CancelOrder(id OrderID) error {
+func (c *qfixConnector) CancelOrder(id entity.OrderID) error {
 	if !c.loggedIn.IsTrue() {
 		return NotConnected
 	}
@@ -242,12 +243,12 @@ func (c *qfixConnector) Quote(instrument entity.Instrument, bidPrice Fixed, bidQ
 func (c *qfixConnector) GetExchangeCode() string {
 	return "GOT"
 }
-func (c *qfixConnector) GetOrder(id OrderID) *Order {
+func (c *qfixConnector) GetOrder(id entity.OrderID) *entity.Order {
 	_order, ok := c.orders.Load(id)
 	if !ok {
 		return nil
 	}
-	return _order.(*Order)
+	return _order.(*entity.Order)
 }
 
 func NewConnector(callback ConnectorCallback, fixSettingFilename string, logOutput io.Writer) ExchangeConnector {

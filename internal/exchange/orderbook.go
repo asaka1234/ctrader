@@ -3,6 +3,7 @@ package exchange
 import (
 	. "github.com/robaho/fixed"
 	"github.com/robaho/go-trader/entity"
+	"github.com/robaho/go-trader/pkg/constant"
 	"sync"
 )
 import (
@@ -38,10 +39,10 @@ func (ob *orderBook) String() string {
 }
 
 func (ob *orderBook) add(so sessionOrder) ([]trade, error) {
-	so.order.OrderState = Booked
+	so.order.OrderState = constant.Booked
 
 	//先把新的order加入到orderbook里
-	if so.order.Side == Buy {
+	if so.order.Side == constant.Buy {
 		ob.bids = insertSort(ob.bids, so, 1)
 	} else {
 		ob.asks = insertSort(ob.asks, so, -1)
@@ -53,8 +54,8 @@ func (ob *orderBook) add(so sessionOrder) ([]trade, error) {
 
 	// cancel any remaining market order
 	//市价单,剩余的部分就撤单！
-	if so.order.OrderType == Market && so.order.IsActive() {
-		so.order.OrderState = Cancelled
+	if so.order.OrderType == constant.Market && so.order.IsActive() {
+		so.order.OrderState = constant.Cancelled
 		ob.remove(so)
 	}
 
@@ -132,12 +133,12 @@ func matchTrades(book *orderBook) []trade {
 	return trades
 }
 
-func fill(order *Order, qty Fixed, price Fixed) {
+func fill(order *entity.Order, qty Fixed, price Fixed) {
 	order.Remaining = order.Remaining.Sub(qty)
 	if order.Remaining.Equal(ZERO) {
-		order.OrderState = Filled
+		order.OrderState = constant.Filled
 	} else {
-		order.OrderState = PartialFill
+		order.OrderState = constant.PartialFill
 	}
 }
 
@@ -155,7 +156,7 @@ func (ob *orderBook) remove(so sessionOrder) error {
 		return false
 	}
 
-	if so.order.Side == Buy {
+	if so.order.Side == constant.Buy {
 		removed = removeFN(&ob.bids, so)
 	} else {
 		removed = removeFN(&ob.asks, so)
@@ -166,7 +167,7 @@ func (ob *orderBook) remove(so sessionOrder) error {
 	}
 
 	if so.order.IsActive() {
-		so.order.OrderState = Cancelled
+		so.order.OrderState = constant.Cancelled
 	}
 
 	return nil

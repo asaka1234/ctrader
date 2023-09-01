@@ -24,19 +24,9 @@ It was primarily developed to further my knowledge of Go and test its suitabilit
 
 go get github.com/robaho/go-trader
 
-# build
-
-go install github.com/robaho/go-trader/cmd/exchange
-
-go install github.com/robaho/go-trader/cmd/client
-
-go install github.com/robaho/go-trader/cmd/marketmaker
-
-go install github.com/robaho/go-trader/cmd/playback
-
 # run
 
-cd $GOPATH/src/github.com/robaho/go-trader/cmd
+cd cmd
 
 exchange &
 

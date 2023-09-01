@@ -3,6 +3,7 @@ package common
 import (
 	"github.com/quickfixgo/enum"
 	. "github.com/robaho/fixed"
+	"github.com/robaho/go-trader/pkg/constant"
 	"github.com/shopspring/decimal"
 )
 
@@ -14,54 +15,54 @@ func ToDecimal(f Fixed) decimal.Decimal {
 	return decimal.NewFromFloat(f.Float())
 }
 
-func MapToFixSide(side Side) enum.Side {
+func MapToFixSide(side constant.Side) enum.Side {
 	switch side {
-	case Buy:
+	case constant.Buy:
 		return enum.Side_BUY
-	case Sell:
+	case constant.Sell:
 		return enum.Side_SELL
 	}
 	panic("unsupported side " + side)
 }
 
-func MapFromFixSide(side enum.Side) Side {
+func MapFromFixSide(side enum.Side) constant.Side {
 	switch side {
 	case enum.Side_BUY:
-		return Buy
+		return constant.Buy
 	case enum.Side_SELL:
-		return Sell
+		return constant.Sell
 	}
 	panic("unsupported side " + side)
 }
 
-func MapToFixOrdStatus(state OrderState) enum.OrdStatus {
+func MapToFixOrdStatus(state constant.OrderState) enum.OrdStatus {
 	switch state {
-	case Booked:
+	case constant.Booked:
 		return enum.OrdStatus_NEW
-	case PartialFill:
+	case constant.PartialFill:
 		return enum.OrdStatus_PARTIALLY_FILLED
-	case Filled:
+	case constant.Filled:
 		return enum.OrdStatus_FILLED
-	case Cancelled:
+	case constant.Cancelled:
 		return enum.OrdStatus_CANCELED
-	case Rejected:
+	case constant.Rejected:
 		return enum.OrdStatus_REJECTED
 	}
 	panic("unknown OrderState " + state)
 }
 
-func MapFromFixOrdStatus(ordStatus enum.OrdStatus) OrderState {
+func MapFromFixOrdStatus(ordStatus enum.OrdStatus) constant.OrderState {
 	switch ordStatus {
 	case enum.OrdStatus_NEW:
-		return Booked
+		return constant.Booked
 	case enum.OrdStatus_CANCELED:
-		return Cancelled
+		return constant.Cancelled
 	case enum.OrdStatus_PARTIALLY_FILLED:
-		return PartialFill
+		return constant.PartialFill
 	case enum.OrdStatus_FILLED:
-		return Filled
+		return constant.Filled
 	case enum.OrdStatus_REJECTED:
-		return Rejected
+		return constant.Rejected
 	}
 	panic("unsupported order status " + ordStatus)
 }

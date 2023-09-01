@@ -115,13 +115,13 @@ func (app *myApplication) onNewOrderSingle(msg newordersingle.NewOrderSingle, se
 	if instrument == nil {
 		return quickfix.NewMessageRejectError("unknown symbol "+symbol, 0, nil)
 	}
-	var order *Order
+	var order *entity.Order
 	if ordType == enum.OrdType_LIMIT {
-		order = LimitOrder(instrument, MapFromFixSide(side), ToFixed(price), ToFixed(qty))
+		order = entity.LimitOrder(instrument, MapFromFixSide(side), ToFixed(price), ToFixed(qty))
 	} else {
-		order = MarketOrder(instrument, MapFromFixSide(side), ToFixed(qty))
+		order = entity.MarketOrder(instrument, MapFromFixSide(side), ToFixed(qty))
 	}
-	order.Id = NewOrderID(clOrdId)
+	order.Id = entity.NewOrderID(clOrdId)
 
 	//2. 随后开始撮合和推送行情
 	c := fixClient{sessionID: sessionID}
@@ -136,7 +136,7 @@ func (app *myApplication) onOrderCancelRequest(msg ordercancelrequest.OrderCance
 		return err
 	}
 	c := fixClient{sessionID: sessionID}
-	app.e.CancelOrder(c, NewOrderID(clOrdId))
+	app.e.CancelOrder(c, entity.NewOrderID(clOrdId))
 
 	return nil
 }
@@ -155,7 +155,7 @@ func (app *myApplication) onOrderCancelReplaceRequest(msg ordercancelreplacerequ
 		return err
 	}
 	c := fixClient{sessionID: sessionID}
-	app.e.ModifyOrder(c, NewOrderID(clOrdId), ToFixed(price), ToFixed(qty))
+	app.e.ModifyOrder(c, entity.NewOrderID(clOrdId), ToFixed(price), ToFixed(qty))
 
 	return nil
 }

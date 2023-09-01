@@ -109,16 +109,16 @@ func (app *myApplication) onExecutionReport(msg executionreport.ExecutionReport,
 	}
 
 	var instrument entity.Instrument
-	var order *Order
-	var id OrderID
+	var order *entity.Order
+	var id entity.OrderID
 
 	instrument = conf.IMap.GetBySymbol(symbol)
 
 	if strings.HasPrefix(exchangeId, "quote.") {
 		// quote fill
-		id = OrderID(0)
+		id = entity.OrderID(0)
 	} else {
-		id = OrderID(ParseInt(clOrdID))
+		id = entity.OrderID(ParseInt(clOrdID))
 		order = app.c.GetOrder(id)
 		if order == nil {
 			return quickfix.NewMessageRejectError("unknown order clOrdID "+clOrdID, 0, nil)

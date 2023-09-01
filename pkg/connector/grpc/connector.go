@@ -6,6 +6,7 @@ import (
 	"github.com/robaho/go-trader/conf"
 	"github.com/robaho/go-trader/entity"
 	. "github.com/robaho/go-trader/pkg/common"
+	"github.com/robaho/go-trader/pkg/constant"
 	"github.com/robaho/go-trader/pkg/protocol"
 	"google.golang.org/grpc"
 	"io"
@@ -166,18 +167,18 @@ func (c *grpcConnector) DownloadInstruments() error {
 	return nil
 }
 
-func (c *grpcConnector) CreateOrder(order *Order) (OrderID, error) {
+func (c *grpcConnector) CreateOrder(order *entity.Order) (entity.OrderID, error) {
 	if !c.loggedIn.IsTrue() {
 		return -1, NotConnected
 	}
 
-	if order.OrderType != Limit && order.OrderType != Market {
+	if order.OrderType != constant.Limit && order.OrderType != constant.Market {
 		return -1, UnsupportedOrderType
 	}
 
 	c.nextOrder = c.nextOrder + 1
 
-	var orderID = OrderID(c.nextOrder)
+	var orderID = entity.OrderID(c.nextOrder)
 	order.Id = orderID
 	c.orders.Store(orderID, order)
 
@@ -187,15 +188,15 @@ func (c *grpcConnector) CreateOrder(order *Order) (OrderID, error) {
 	co.Price = ToFloat(order.Price)
 	co.Quantity = ToFloat(order.Quantity)
 	switch order.OrderType {
-	case Market:
+	case constant.Market:
 		co.OrderType = protocol.CreateOrderRequest_Market
-	case Limit:
+	case constant.Limit:
 		co.OrderType = protocol.CreateOrderRequest_Limit
 	}
 	switch order.Side {
-	case Buy:
+	case constant.Buy:
 		co.OrderSide = protocol.CreateOrderRequest_Buy
-	case Sell:
+	case constant.Sell:
 		co.OrderSide = protocol.CreateOrderRequest_Sell
 	}
 
@@ -204,7 +205,7 @@ func (c *grpcConnector) CreateOrder(order *Order) (OrderID, error) {
 	return orderID, err
 }
 
-func (c *grpcConnector) ModifyOrder(id OrderID, price Fixed, quantity Fixed) error {
+func (c *grpcConnector) ModifyOrder(id entity.OrderID, price Fixed, quantity Fixed) error {
 	if !c.loggedIn.IsTrue() {
 		return NotConnected
 	}
@@ -228,7 +229,7 @@ func (c *grpcConnector) ModifyOrder(id OrderID, price Fixed, quantity Fixed) err
 	return err
 }
 
-func (c *grpcConnector) CancelOrder(id OrderID) error {
+func (c *grpcConnector) CancelOrder(id entity.OrderID) error {
 	if !c.loggedIn.IsTrue() {
 		return NotConnected
 	}
@@ -271,23 +272,23 @@ func (c *grpcConnector) Quote(instrument entity.Instrument, bidPrice Fixed, bidQ
 func (c *grpcConnector) GetExchangeCode() string {
 	return "GOT"
 }
-func (c *grpcConnector) GetOrder(id OrderID) *Order {
+func (c *grpcConnector) GetOrder(id entity.OrderID) *entity.Order {
 	_order, ok := c.orders.Load(id)
 	if !ok {
 		return nil
 	}
-	return _order.(*Order)
+	return _order.(*entity.Order)
 }
 
 func (c *grpcConnector) handleExecutionReport(rpt *protocol.ExecutionReport) {
 	exchangeId := rpt.ExOrdId
-	var id OrderID
-	var order *Order
+	var id entity.OrderID
+	var order *entity.Order
 	if strings.HasPrefix(exchangeId, "quote.") {
 		// quote fill
-		id = OrderID(0)
+		id = entity.OrderID(0)
 	} else {
-		id = OrderID(int(rpt.ClOrdId))
+		id = entity.OrderID(int(rpt.ClOrdId))
 		order = c.GetOrder(id)
 		if order == nil {
 			log.Println("unknown order ", id)
@@ -300,19 +301,19 @@ func (c *grpcConnector) handleExecutionReport(rpt *protocol.ExecutionReport) {
 		log.Println("unknown symbol in execution report ", rpt.Symbol)
 	}
 
-	var state OrderState
+	var state constant.OrderState
 
 	switch rpt.OrderState {
 	case protocol.ExecutionReport_Booked:
-		state = Booked
+		state = constant.Booked
 	case protocol.ExecutionReport_Cancelled:
-		state = Cancelled
+		state = constant.Cancelled
 	case protocol.ExecutionReport_Partial:
-		state = PartialFill
+		state = constant.PartialFill
 	case protocol.ExecutionReport_Filled:
-		state = Filled
+		state = constant.Filled
 	case protocol.ExecutionReport_Rejected:
-		state = Rejected
+		state = constant.Rejected
 	}
 
 	if order != nil {
@@ -331,11 +332,11 @@ func (c *grpcConnector) handleExecutionReport(rpt *protocol.ExecutionReport) {
 		lastPx := NewF(rpt.LastPrice)
 		lastQty := NewF(rpt.LastQuantity)
 
-		var side Side
+		var side constant.Side
 		if rpt.Side == protocol.CreateOrderRequest_Buy {
-			side = Buy
+			side = constant.Buy
 		} else {
-			side = Sell
+			side = constant.Sell
 		}
 
 		fill := &Fill{instrument, id == 0, order, exchangeId, lastQty, lastPx, side, false}

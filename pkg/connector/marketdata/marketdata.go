@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
 	"io"
 	"log"
 	"net"
 	"sync"
 
-	. "github.com/robaho/go-trader/pkg/common"
-	"github.com/robaho/go-trader/pkg/protocol"
+	. "logtech.com/exchange/ltrader/pkg/common"
+	"logtech.com/exchange/ltrader/pkg/protocol"
 )
 
 var replayRequests = make(chan protocol.ReplayRequest, 1000)

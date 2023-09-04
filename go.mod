@@ -1,4 +1,4 @@
-module github.com/robaho/go-trader
+module logtech.com/exchange/ltrader
 
 go 1.20
 

@@ -2,12 +2,12 @@ package exchange
 
 import (
 	"fmt"
-	"github.com/robaho/go-trader/entity"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/entity"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"testing"
 	"time"
 
-	. "github.com/robaho/go-trader/pkg/common"
+	. "logtech.com/exchange/ltrader/pkg/common"
 )
 
 func TestWaitForKey(t *testing.T) {

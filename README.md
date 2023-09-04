@@ -22,7 +22,7 @@ It was primarily developed to further my knowledge of Go and test its suitabilit
 
 # install
 
-go get github.com/robaho/go-trader
+go get logtech.com/exchange/ltrader
 
 # run
 

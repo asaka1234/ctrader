@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
 	"github.com/spf13/cobra"
 	"log"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
 	"math/rand"
 	"os"
 	"runtime/pprof"
@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/VividCortex/gohistogram"
-	. "github.com/robaho/go-trader/pkg/common"
-	"github.com/robaho/go-trader/pkg/connector"
+	. "logtech.com/exchange/ltrader/pkg/common"
+	"logtech.com/exchange/ltrader/pkg/connector"
 )
 
 var (

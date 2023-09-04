@@ -2,8 +2,8 @@ package exchange
 
 import (
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/entity"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/entity"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"sync"
 )
 import (
@@ -12,9 +12,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	. "github.com/robaho/go-trader/pkg/common"
+	. "logtech.com/exchange/ltrader/pkg/common"
 )
 
+// orderbook和book区别
+// orderbook： 是match里的,包含所有order列表
+// book : 是market行情服务里的, 不包含所有order，只是每一档的price和Volume,
 type orderBook struct {
 	sync.Mutex
 	entity.Instrument
@@ -38,6 +41,7 @@ func (ob *orderBook) String() string {
 	return fmt.Sprint("bids:", ob.bids, "asks:", ob.asks)
 }
 
+// 实际入口
 func (ob *orderBook) add(so sessionOrder) ([]trade, error) {
 	so.order.OrderState = constant.Booked
 
@@ -173,6 +177,7 @@ func (ob *orderBook) remove(so sessionOrder) error {
 	return nil
 }
 
+// 构造book
 func (ob *orderBook) buildBook() *Book {
 	var book = new(Book)
 
@@ -183,6 +188,7 @@ func (ob *orderBook) buildBook() *Book {
 	return book
 }
 
+// 把每一档的qty累加, 所以qty相当于是volume
 func createBookLevels(orders []sessionOrder) []BookLevel {
 	var levels []BookLevel
 

@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/pkg/protocol"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/pkg/protocol"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/quickfixgo/quickfix"
-	"github.com/robaho/go-trader/internal/exchange"
-	"github.com/robaho/go-trader/pkg/common"
+	"logtech.com/exchange/ltrader/internal/exchange"
+	"logtech.com/exchange/ltrader/pkg/common"
 )
 
 import _ "net/http/pprof"

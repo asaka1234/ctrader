@@ -2,7 +2,7 @@ package conf
 
 import (
 	"bufio"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/entity"
 	"os"
 	"strconv"
 	"strings"

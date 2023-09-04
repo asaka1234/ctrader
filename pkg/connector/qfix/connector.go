@@ -4,8 +4,8 @@ import (
 	"github.com/quickfixgo/fix44/securitydefinitionrequest"
 	"github.com/quickfixgo/fix44/securitylistrequest"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/entity"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/entity"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"io"
 	"os"
 	"strconv"
@@ -20,7 +20,7 @@ import (
 	"github.com/quickfixgo/fix44/ordercancelreplacerequest"
 	"github.com/quickfixgo/fix44/ordercancelrequest"
 	"github.com/quickfixgo/quickfix"
-	. "github.com/robaho/go-trader/pkg/common"
+	. "logtech.com/exchange/ltrader/pkg/common"
 )
 
 type qfixConnector struct {

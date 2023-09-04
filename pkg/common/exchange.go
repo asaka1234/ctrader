@@ -3,8 +3,8 @@ package common
 import (
 	"errors"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/entity"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/entity"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"time"
 )
 
@@ -45,7 +45,7 @@ type Fill struct {
 // an exchange trade, not necessarily initiated by the current client
 type Trade struct {
 	Instrument entity.Instrument
-	Quantity   Fixed
+	Quantity   Fixed //当前成交
 	Price      Fixed
 	ExchangeID string
 	TradeTime  time.Time

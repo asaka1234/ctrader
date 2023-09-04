@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/quickfixgo/fix44/securitydefinition"
 	"github.com/robaho/fixed"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
 	"strings"
 
 	"github.com/quickfixgo/enum"
 	"github.com/quickfixgo/fix44/executionreport"
 	"github.com/quickfixgo/quickfix"
-	. "github.com/robaho/go-trader/pkg/common"
+	. "logtech.com/exchange/ltrader/pkg/common"
 )
 
 type myApplication struct {

@@ -3,7 +3,7 @@ package common
 import (
 	"github.com/quickfixgo/enum"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"github.com/shopspring/decimal"
 )
 

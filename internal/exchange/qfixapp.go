@@ -5,8 +5,8 @@ import (
 	"github.com/quickfixgo/fix44/securitydefinition"
 	"github.com/quickfixgo/fix44/securitylistrequest"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
 	"strconv"
 	"sync"
 
@@ -19,7 +19,7 @@ import (
 	"github.com/quickfixgo/fix44/ordercancelrequest"
 	"github.com/quickfixgo/fix44/securitydefinitionrequest"
 	"github.com/quickfixgo/quickfix"
-	. "github.com/robaho/go-trader/pkg/common"
+	. "logtech.com/exchange/ltrader/pkg/common"
 	"github.com/shopspring/decimal"
 )
 

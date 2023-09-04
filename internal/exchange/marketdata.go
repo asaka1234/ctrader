@@ -6,8 +6,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
 	"golang.org/x/net/ipv4"
 	"log"
 	"net"
@@ -15,24 +15,24 @@ import (
 	"sync"
 	"sync/atomic"
 
-	. "github.com/robaho/go-trader/pkg/common"
-	"github.com/robaho/go-trader/pkg/protocol"
+	. "logtech.com/exchange/ltrader/pkg/common"
+	"logtech.com/exchange/ltrader/pkg/protocol"
 )
 
 //用来做行情加工和推送. 相当于是market和push-center两个服务的合集
 
 // market data caches the latest books, and publishes books and exchange trades via multicast
 
-var bookCache sync.Map
-var statsCache sync.Map
+var bookCache sync.Map  //key->symbol value是book
+var statsCache sync.Map //key -> symbol. value是ticker
 
 var eventChannel chan MarketEvent
 var lastSentBook map[entity.Instrument]uint64 // to avoid publishing exact same book multiple times due to coalescing
-var sequence uint64
+var sequence uint64                           //每个book都有一个自增的seq_id,避免顺序颠倒
 var udpCon *net.UDPConn
 var pUdpCon *ipv4.PacketConn
 var subMutex sync.Mutex
-var subscriptions []chan *Book
+var subscriptions []chan *Book //TODO  貌似没用到.应该是还没开发完毕
 var buffers = &SPSC{}
 
 type MarketEvent struct {
@@ -40,12 +40,14 @@ type MarketEvent struct {
 	trades []trade
 }
 
+// 这个统计是ticker
+// 累计一段时间的高开低首/涨跌幅等
 type Statistics struct {
 	Symbol     string
-	BidQty     Fixed
-	BidPrice   Fixed
-	AskQty     Fixed
-	AskPrice   Fixed
+	BidQty     Fixed //BBO档一的qty
+	BidPrice   Fixed //BBO档一的price
+	AskQty     Fixed //BBO档一的qty
+	AskPrice   Fixed //BBO档一的price
 	Volume     Fixed
 	High       Fixed
 	Low        Fixed
@@ -114,15 +116,17 @@ func newBuffer() *bytes.Buffer {
 	return buf
 }
 
+// 感觉就是发送行情(book + trades).同时更新了ticker, 但是也没见发送，只是更新了内存. 应该是还没实现完毕
 func publish() {
 	stats := make(map[entity.Instrument]*Statistics)
 
 	buf := newBuffer()
 
 	for {
+		//收到撮合结果
 		event := <-eventChannel
 
-		//拿到最新的成交和orderbook
+		//TODO 要看一下具体作用
 		book := getLatestBook(event.book)
 		trades := coalesceTrades(event.trades)
 
@@ -134,10 +138,12 @@ func publish() {
 		}
 
 		if book.HasBids() {
+			//档一
 			s.BidPrice = book.Bids[0].Price
 			s.BidQty = book.Bids[0].Quantity
 		}
 		if book.HasAsks() {
+			//档一
 			s.AskPrice = book.Asks[0].Price
 			s.AskQty = book.Asks[0].Quantity
 		}
@@ -157,13 +163,13 @@ func publish() {
 				}
 			}
 		}
-
+		//更新Ticker行情
 		statsCache.Store(book.Instrument, s)
 
 		buf2 := newBuffer()
-
 		protocol.EncodeMarketEvent(buf2, book, trades)
 
+		//用udp发出去
 		if len(eventChannel) == 0 || buf2.Len()+buf.Len() > protocol.MaxMsgSize {
 			if buf.Len() == 8 { // the group packet is empty, so just use this one
 				sendPacket(buf2.Bytes())
@@ -183,6 +189,7 @@ func publish() {
 			buf.Write(buf2.Bytes()[8:])
 		}
 
+		// TODO 要看一下这一块发给内部作用是什么？？？
 		// publish to internal subscribers
 		for _, sub := range subscriptions {
 			sub <- book
@@ -193,6 +200,8 @@ func publish() {
 func getLatestBook(book *Book) *Book {
 	lastSeq, ok := lastSentBook[book.Instrument]
 	if ok {
+		//必须是最新的才可以，book是通过seq_id来维护新旧的.
+		//TODO 没找到在哪赋值的.
 		if lastSeq >= book.Sequence {
 			return nil
 		}
@@ -208,6 +217,8 @@ func getStatistics(instrument entity.Instrument) *Statistics {
 	return nil
 }
 
+// 联系的trade-list, 类似滑块. 前后挨着price相同的做合并.
+// trade是不关心trade_id的，更多知识price+qty
 func coalesceTrades(trades []trade) []Trade {
 	var Trades []Trade
 

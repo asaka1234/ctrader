@@ -3,15 +3,15 @@ package exchange
 import (
 	"fmt"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"log"
 	"strconv"
 
 	"github.com/pkg/errors"
-	. "github.com/robaho/go-trader/pkg/common"
-	"github.com/robaho/go-trader/pkg/protocol"
+	. "logtech.com/exchange/ltrader/pkg/common"
+	"logtech.com/exchange/ltrader/pkg/protocol"
 )
 
 //----------负责对外提供grpc接口----------------------------------
@@ -64,6 +64,7 @@ func (c *grpcClient) SendTrades(trades []trade) {
 	}
 }
 
+// sessionId只要唯一就好了
 func (c *grpcClient) SessionID() string {
 	return fmt.Sprint(c.conn)
 }
@@ -109,19 +110,24 @@ func (c *grpcClient) sendTradeExecutionReport(so sessionOrder, price Fixed, quan
 	so.client.(*grpcClient).conn.Send(&protocol.OutMessage{Reply: reply})
 }
 
+// 系统函数
+// 收到client的connect请求后, 会进入这里. 相当于这里是read入口
 func (s *grpcServer) Connection(conn protocol.Exchange_ConnectionServer) error {
 
+	//client代表一个connect长连接
 	client := &grpcClient{conn: conn}
-
+	//一个client对应一个session
 	s.e.newSession(client)
 
 	log.Println("grpc session connect", client)
 	defer func() {
 		log.Println("grpc session disconnect", client)
+		//TODO 要看一下作用
 		s.e.SessionDisconnect(client)
 	}()
 
 	for {
+		//开始不断从这个conn中接收数据
 		msg, err := conn.Recv()
 
 		if err != nil {
@@ -131,6 +137,7 @@ func (s *grpcServer) Connection(conn protocol.Exchange_ConnectionServer) error {
 
 		switch msg.Request.(type) {
 		case *protocol.InMessage_Login:
+			//login登录请求
 			err = s.login(conn, client, msg.GetRequest().(*protocol.InMessage_Login).Login)
 			if err != nil {
 				return err
@@ -142,17 +149,23 @@ func (s *grpcServer) Connection(conn protocol.Exchange_ConnectionServer) error {
 			err = conn.Send(&protocol.OutMessage{Reply: reply})
 			continue
 		}
+		//--------------------------------------------
+
 		switch msg.Request.(type) {
 		case *protocol.InMessage_Download:
+			//todo 要明确下作用
 			s.download(conn, client)
 		case *protocol.InMessage_Massquote:
+			//todo 要明确下作用
 			err = s.massquote(conn, client, msg.GetRequest().(*protocol.InMessage_Massquote).Massquote)
 		case *protocol.InMessage_Create:
 			//进入一个新order,开始撮合和做行情推送
 			err = s.create(conn, client, msg.GetRequest().(*protocol.InMessage_Create).Create)
 		case *protocol.InMessage_Modify:
+			//修改order -> TODO 为什么会有修改能力?
 			err = s.modify(conn, client, msg.GetRequest().(*protocol.InMessage_Modify).Modify)
 		case *protocol.InMessage_Cancel:
+			//取消order
 			err = s.cancel(conn, client, msg.GetRequest().(*protocol.InMessage_Cancel).Cancel)
 		}
 
@@ -185,11 +198,14 @@ func (s *grpcServer) download(conn protocol.Exchange_ConnectionServer, client *g
 	conn.Send(&protocol.OutMessage{Reply: sec})
 	log.Println("downloading complete")
 }
+
+// mass quote message 批量报价
 func (s *grpcServer) massquote(server protocol.Exchange_ConnectionServer, client *grpcClient, q *protocol.MassQuoteRequest) error {
 	instrument := conf.IMap.GetBySymbol(q.Symbol)
 	if instrument == nil {
 		return errors.New("unknown symbol " + q.Symbol)
 	}
+	//TODO 这个价这个数量,你接不接?
 	return s.e.Quote(client, instrument, NewDecimalF(q.BidPrice), NewDecimalF(q.BidQuantity), NewDecimalF(q.AskPrice), NewDecimalF(q.AskQuantity))
 }
 func (s *grpcServer) create(conn protocol.Exchange_ConnectionServer, client *grpcClient, request *protocol.CreateOrderRequest) error {

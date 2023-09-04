@@ -2,7 +2,7 @@ package common
 
 import (
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/entity"
 	"reflect"
 )
 
@@ -11,6 +11,7 @@ type BookLevel struct {
 	Quantity Fixed
 }
 
+// 是行情服务里的orderbook, 里边的bookLevel不含有所有订单,只是每一档的price和qty
 type Book struct {
 	Instrument entity.Instrument
 	Bids       []BookLevel

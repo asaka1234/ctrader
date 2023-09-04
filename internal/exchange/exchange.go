@@ -3,27 +3,26 @@ package exchange
 import (
 	"fmt"
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/entity"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/entity"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	. "github.com/robaho/go-trader/pkg/common"
+	. "logtech.com/exchange/ltrader/pkg/common"
 )
 
 // ------------------------------------------------------
-//TODO 作用是什么?
-
+// 存的是最新的bid/ask的两个单子.(TODO 没看出作用来)
 type quotePair struct {
 	bid sessionOrder
 	ask sessionOrder
 }
 
 // ------------------------------------------------------
-//TODO 作用是什么?
+//代表一个clint链接conn.(grpc或fix),主要用于对结果的返回(毕竟不同协议的conn的结构是不一样的)
 
 type exchangeClient interface {
 	SendOrderStatus(so sessionOrder)
@@ -32,18 +31,18 @@ type exchangeClient interface {
 }
 
 // ------------------------------------------------------
-//TODO 作用是什么?
+//一个session代表一个symbol的处理机
 
 type session struct {
 	sync.Mutex
 	id     string
-	orders map[entity.OrderID]*entity.Order
-	quotes map[entity.Instrument]quotePair
-	client exchangeClient
+	orders map[entity.OrderID]*entity.Order //id -> order
+	quotes map[entity.Instrument]quotePair  //每个pair的所有原始orderBook  (因为symbol没有独立的group，所以只能通过map来区分)
+	client exchangeClient                   //TODO 这个要搞清楚作用.
 }
 
 // ------------------------------------------------------
-//TODO 作用是什么?
+//代表当前symbol的session中的一个order
 
 type sessionOrder struct {
 	client exchangeClient
@@ -80,6 +79,7 @@ type exchange struct {
 	nextOrder  int32
 }
 
+// 一个session代表一个conn长连接
 func (e *exchange) newSession(client exchangeClient) *session {
 	s := session{}
 	s.id = client.SessionID()
@@ -134,6 +134,7 @@ func (e *exchange) CreateOrder(client exchangeClient, order *entity.Order) (enti
 
 	s.orders[orderID] = order
 
+	//之所以要session order目的是为了找到他的client长连接.
 	so := sessionOrder{client, order, time.Now()}
 
 	//开始真正的去撮合
@@ -142,7 +143,12 @@ func (e *exchange) CreateOrder(client exchangeClient, order *entity.Order) (enti
 		return -1, err
 	}
 
+	//TODO 全量的所有book,没有走增量??
 	book := ob.buildBook()
+	/*
+		sendMarketData是对结果的广播
+		sendTrades是针对请求者的定向返回
+	*/
 	//对撮合的结果做push推送
 	sendMarketData(MarketEvent{book, trades})
 	client.SendTrades(trades)
@@ -213,6 +219,8 @@ func (e *exchange) CancelOrder(client exchangeClient, orderId entity.OrderID) er
 	return nil
 }
 
+// rfq相当于是询价请求
+// TODO 但是我不理解的是为什么:实际执行撮合了?并且存了一份最新的bid/ask的最新的order？保存起来的作用是什么呢？
 func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bidPrice Fixed, bidQuantity Fixed, askPrice Fixed, askQuantity Fixed) error {
 	ob := e.lockOrderBook(instrument)
 	defer ob.Unlock()
@@ -220,6 +228,7 @@ func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bi
 	s := e.lockSession(client)
 	defer s.Unlock()
 
+	//把quote清空
 	qp, ok := s.quotes[instrument]
 	if ok {
 		if qp.bid.order != nil {
@@ -233,12 +242,16 @@ func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bi
 	} else {
 		qp = quotePair{}
 	}
+
 	var trades []trade
 	if !bidPrice.IsZero() {
+		//相当于下了一个order
 		order := entity.LimitOrder(instrument, constant.Buy, bidPrice, bidQuantity)
 		order.ExchangeId = "quote.bid." + strconv.FormatInt(instrument.ID(), 10)
 		so := sessionOrder{client, order, time.Now()}
+		//赋值到bid里, 所以这里的bid应该是最新的单子
 		qp.bid = so
+		//做撮合，产生成交
 		bidTrades, _ := ob.add(so)
 		if bidTrades != nil {
 			trades = append(trades, bidTrades...)
@@ -256,9 +269,11 @@ func (e *exchange) Quote(client exchangeClient, instrument entity.Instrument, bi
 	}
 	s.quotes[instrument] = qp
 
+	//获取orderbook
 	book := ob.buildBook()
 	sendMarketData(MarketEvent{book, trades})
 
+	//发送trade成交出去
 	client.SendTrades(trades)
 
 	return nil

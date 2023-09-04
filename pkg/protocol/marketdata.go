@@ -2,9 +2,9 @@ package protocol
 
 import (
 	"bytes"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
-	. "github.com/robaho/go-trader/pkg/common"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
+	. "logtech.com/exchange/ltrader/pkg/common"
 )
 
 // very simplified structure, only one book and associated trades per UDP packet, and it contains the complete book
@@ -13,6 +13,7 @@ import (
 // MaxMsgSize is the maximum length of a multicast message
 const MaxMsgSize = 1024
 
+// 可以同时发送book+trade, 也可以单独发送trade
 func EncodeMarketEvent(w *bytes.Buffer, book *Book, trades []Trade) {
 	PutVarint(w, book.Instrument.ID())
 	if book != nil {

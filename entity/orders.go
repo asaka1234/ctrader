@@ -2,7 +2,7 @@ package entity
 
 import (
 	. "github.com/robaho/fixed"
-	"github.com/robaho/go-trader/pkg/constant"
+	"logtech.com/exchange/ltrader/pkg/constant"
 	"strconv"
 	"sync"
 )
@@ -16,7 +16,7 @@ type Order struct {
 	sync.RWMutex
 	Instrument
 	Id         OrderID
-	ExchangeId string
+	ExchangeId string //相当于是seq_id, 是自增的
 	Price      Fixed
 	constant.OrderSide
 	Quantity  Fixed

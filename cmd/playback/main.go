@@ -4,16 +4,16 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/robaho/go-trader/conf"
-	"github.com/robaho/go-trader/entity"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/entity"
 	"github.com/spf13/cobra"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	. "github.com/robaho/go-trader/pkg/common"
-	"github.com/robaho/go-trader/pkg/connector"
+	. "logtech.com/exchange/ltrader/pkg/common"
+	"logtech.com/exchange/ltrader/pkg/connector"
 )
 
 var (

@@ -16,6 +16,17 @@ type Config struct {
 	GrpcPort      string `config:"grpc_port" default:"5000"`
 	GrpcHost      string `config:"grpc_host" default:"localhost"` //protocol sets the client connect protocol, the server always enables both -> grpc|fix
 	Protocol      string `config:"protocol" default:"fix"`
+
+	DB struct {
+		ExchangeDsn string `config:"ExchangeDsn" default:""`
+		MaxConn     int    `config:"MaxConn" default:"50"`
+		MaxIdle     int    `config:"MaxIdle" default:"10"`
+	} `config:"DB"`
+
+	Redis struct {
+		Url  string `config:"Url" default:""`
+		Auth string `config:"Auth" default:""`
+	} `config:"Redis"`
 }
 
 // 是全局的配置加载

@@ -8,3 +8,13 @@ grpc_host: localhost
 # grpc|fix
 protocol: fix
 
+
+DB:
+  ExchangeDsn: exchange:123@tcp(rds-test.12345.app.aliyun.com:3306)/futures?timeout=30s&&loc=Local&parseTime=true&allowOldPasswords=1
+  MaxConn: 100
+  MaxIdle: 100
+
+Redis:
+  Url: v5-redis-cluster-test.aliyun.com:6379
+  Auth:
+

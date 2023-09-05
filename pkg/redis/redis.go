@@ -92,6 +92,15 @@ func HVals(hashKey string) ([]string, error) {
 	return v, nil
 }
 
+func HGet(hashKey string, field string) (string, error) {
+	v, err := client.HGet(context.Background(), hashKey, field).Result()
+	if err != nil {
+		log.Errorf("Redis:HVals hasKey=%v, err=%+v", hashKey, err)
+		return "", err
+	}
+	return v, nil
+}
+
 func IncrBy(hashKey string, val int64) (int64, error) {
 	v, err := client.IncrBy(context.Background(), hashKey, val).Result()
 	if err != nil {

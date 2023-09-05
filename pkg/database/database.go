@@ -12,8 +12,6 @@ import (
 )
 
 var coreDb *gorm.DB
-var klineMasterDb *gorm.DB
-var klineSlaveDb *gorm.DB
 
 func InitCore(dsn string, maxConn, maxIdle int) {
 
@@ -39,64 +37,8 @@ func InitCore(dsn string, maxConn, maxIdle int) {
 
 }
 
-func InitKlineMasterDb(dsn string, maxConn, maxIdle int) {
-	var err error
-	klineMasterDb, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: gorm_logger.Default.LogMode(gorm_logger.Error),
-	})
-	if err != nil {
-		panic(err)
-	} else {
-		sqlDB, err := klineMasterDb.DB()
-		if err != nil {
-			panic(err)
-		} else {
-			sqlDB.SetMaxIdleConns(maxIdle)
-			sqlDB.SetMaxOpenConns(maxConn)
-			sqlDB.SetConnMaxLifetime(time.Hour * 1)
-			sqlDB.Ping()
-			go monitorConnection(sqlDB, dsn)
-		}
-		log.Info("kline DB init SUCC")
-	}
-}
-
-func InitKlineSlaveDb(dsn string, maxConn, maxIdle int) {
-	var err error
-	klineSlaveDb, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: gorm_logger.Default.LogMode(gorm_logger.Error),
-	})
-	if err != nil {
-		panic(err)
-	} else {
-		sqlDB, err := klineSlaveDb.DB()
-		if err != nil {
-			panic(err)
-		} else {
-			sqlDB.SetMaxIdleConns(maxIdle)
-			sqlDB.SetMaxOpenConns(maxConn)
-			sqlDB.SetConnMaxLifetime(time.Hour * 1)
-			sqlDB.Ping()
-			go monitorConnection(sqlDB, dsn)
-		}
-		log.Info("kline DB init SUCC")
-	}
-}
-
 func GetCoreDb() (*gorm.DB, error) {
 	return coreDb, nil
-}
-
-func GetKlineDb() (*gorm.DB, error) {
-	return klineSlaveDb, nil
-}
-
-func GetKlineSlaveDb() (*gorm.DB, error) {
-	return klineSlaveDb, nil
-}
-
-func GetKlineMasterDb() (*gorm.DB, error) {
-	return klineMasterDb, nil
 }
 
 func CloseAllDb() error {
@@ -108,35 +50,18 @@ func CloseAllDb() error {
 	if err != nil {
 		return nil
 	}
-
-	//-----------
-
-	sqlDB, err = klineMasterDb.DB()
-	if err != nil {
-		return nil
-	}
-	err = sqlDB.Close()
-	if err != nil {
-		return nil
-	}
-
-	//-----------
-	sqlDB, err = klineSlaveDb.DB()
-	if err != nil {
-		return nil
-	}
-	return sqlDB.Close()
+	return err
 }
 
 func refresh(url string) (newSql *sql.DB, err error) {
-	klineSlaveDb, err = gorm.Open(mysql.Open(url), &gorm.Config{
+	coreDb, err = gorm.Open(mysql.Open(url), &gorm.Config{
 		Logger: gorm_logger.Default.LogMode(gorm_logger.Error),
 	})
 	if err != nil {
 		log.Errorf("kline db refresh error %v", err)
 		return nil, err
 	} else {
-		sqlDB, err := klineSlaveDb.DB()
+		sqlDB, err := coreDb.DB()
 		if err != nil {
 			panic(err)
 		} else {

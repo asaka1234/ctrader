@@ -2,6 +2,8 @@ package constant
 
 type EmailOperateTypeEnum string
 
+//发送的邮件的标题
+
 const (
 	RegByEmail            EmailOperateTypeEnum = "邮箱注册"
 	BindEmail             EmailOperateTypeEnum = "绑定邮箱"

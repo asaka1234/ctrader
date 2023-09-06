@@ -18,7 +18,7 @@ import (
 func verifyToken(c *gin.Context) {
 
 	//根据token判断是否存在，是否可以获取到user
-	token:=c.GetHeader(constant.ExchangeTokenName)
+	token:=c.GetHeader(string(constant.ExchangeTokenName))
 	if token!=""{
 		var redisData string
 		redisKey:=pkg.UserTokenKey(token)
@@ -50,7 +50,7 @@ func verifyToken(c *gin.Context) {
 				tOpen = true
 			}
 
-			if tOpen && c.GetHeader(constant.ExchangeAuto) == "1" {
+			if tOpen && c.GetHeader(string(constant.ExchangeAuto)) == "1" {
 				log.Debug("自动刷新接口，无需更新token");
 			} else {
 				redis.Expire(WebApiConstants.TOKEN_USER + token, WebApiConstants.LOGIN_TIMEOUT);
@@ -81,7 +81,7 @@ func getUidLoginTerminalType(c *gin.Context, uid int) string {
  * @return
  */
 func getClientType(c *gin.Context) string {
-	client := c.GetHeader(constant.ExchangeClientName)
+	client := c.GetHeader(string(constant.ExchangeClientName))
 	if client=="" {
 		client = "pc"
 	}
@@ -214,7 +214,7 @@ func sendUnusualEmail(loginUser model.User, c *gin.Context) {
  * @return
  */
 func getLanguage(c *gin.Context) string {
-	language := c.GetHeader(constant.ExchangeLanguage)
+	language := c.GetHeader(string(constant.ExchangeLanguage))
 	if language==""{
 		kvInfo := model.GetConfigKvStore(constant.DefaultLanguage)
 		if kvInfo!=nil && kvInfo.Value!=""{

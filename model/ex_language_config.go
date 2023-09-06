@@ -13,7 +13,7 @@ type ExLanguageConfig struct {
 	IsOpen           int       `gorm:"column:is_open"`            //是否启用 1启用 0关闭
 	Type             int       `gorm:"column:type"`               //类型 1条件设置
 	Key              string    `gorm:"column:key"`                //语言key
-	Language         string    `gorm:"column:language"`           //
+	Language         string    `gorm:"column:i18n"`               //
 	Title            string    `gorm:"column:title"`              //语言名称
 	Icon             string    `gorm:"column:icon"`               //语言图标
 	SmsHeader        string    `gorm:"column:sms_header"`         //短信机构名（短信里的title）

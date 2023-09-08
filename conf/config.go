@@ -1,9 +1,8 @@
 package conf
 
 import (
-	"github.com/jinzhu/configor"
-	"logtech.com/exchange/ltrader/pkg/logger"
-	"os"
+	gookit_conf "github.com/gookit/config/v2"
+	"github.com/gookit/config/v2/yaml"
 )
 
 //--------------------------------------------------
@@ -34,10 +33,17 @@ var AppConfig = &Config{}
 
 func ParseConf(filename string) error {
 
-	err := configor.Load(AppConfig, filename)
+	gookit_conf.AddDriver(yaml.Driver)
+	err := gookit_conf.LoadFiles(filename)
 	if err != nil {
-		logger.Infof("配置文件解析失败，请校验配置文件 Failed to load setting, Error in configor.Load, err=%v", err.Error())
-		os.Exit(-1)
+		//logger.Infof("配置文件解析失败，请校验配置文件 Failed to load setting, Error in gookit_conf.LoadFiles, err=%v", err.Error())
+		return err
 	}
+	err = gookit_conf.Decode(&AppConfig)
+	if err != nil {
+		//logger.Infof("配置文件解析失败，请校验配置文件 Failed to Decode setting, Error in gookit_conf.Decode, err=%v", err.Error())
+		return err
+	}
+
 	return nil
 }

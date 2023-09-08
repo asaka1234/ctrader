@@ -3,18 +3,18 @@ package main
 import (
 	"fmt"
 	"github.com/robaho/fixed"
+	"github.com/spf13/cobra"
+	"log"
 	"logtech.com/exchange/ltrader/conf"
 	"logtech.com/exchange/ltrader/entity"
 	"logtech.com/exchange/ltrader/pkg/constant"
-	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"strings"
 	"sync"
 
+	"github.com/robaho/gocui"
 	. "logtech.com/exchange/ltrader/pkg/common"
 	"logtech.com/exchange/ltrader/pkg/connector"
-	"github.com/robaho/gocui"
 )
 
 var (
@@ -48,7 +48,7 @@ func main() {
 func start() {
 
 	//1. 解析配置文件
-	err := conf.ParseConf(config, conf.AppConfig, true)
+	err := conf.ParseConf(config)
 
 	var callback = MyCallback{}
 

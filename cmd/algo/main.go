@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/robaho/fixed"
+	"github.com/spf13/cobra"
+	"log"
 	"logtech.com/exchange/ltrader/conf"
 	"logtech.com/exchange/ltrader/entity"
 	"logtech.com/exchange/ltrader/pkg/constant"
-	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"time"
 
@@ -56,7 +56,7 @@ func start() {
 	callback.offset = fixed.NewF(offset)
 
 	//1. 解析配置文件
-	err := conf.ParseConf(config, conf.AppConfig, true)
+	err := conf.ParseConf(config)
 	/*
 		p, err := NewProperties(*props)
 		if err != nil {

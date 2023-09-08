@@ -96,7 +96,7 @@ func start() {
 	callback.symbol = symbol
 
 	//1. 解析配置文件
-	err := conf.ParseConf(config, conf.AppConfig, true)
+	err := conf.ParseConf(config)
 	/*
 		p, err := NewProperties(*props)
 		if err != nil {

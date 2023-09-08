@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/spf13/cobra"
 	"logtech.com/exchange/ltrader/conf"
 	"logtech.com/exchange/ltrader/entity"
-	"github.com/spf13/cobra"
 	"os"
 	"strconv"
 	"strings"
@@ -52,7 +52,7 @@ func start() {
 	var callback = MyCallback{}
 
 	//1. 解析配置文件
-	err := conf.ParseConf(config, conf.AppConfig, true)
+	err := conf.ParseConf(config)
 	/*
 		p, err := NewProperties(*props)
 		if err != nil {

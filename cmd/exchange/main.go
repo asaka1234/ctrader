@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"logtech.com/exchange/ltrader/conf"
-	"logtech.com/exchange/ltrader/pkg/protocol"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
+	"logtech.com/exchange/ltrader/conf"
+	"logtech.com/exchange/ltrader/pkg/protocol"
 	"net"
 	"os"
 	"runtime"
@@ -60,7 +60,7 @@ func main() {
 func start() {
 
 	//1. 解析配置文件
-	err := conf.ParseConf(config, conf.AppConfig, true)
+	err := conf.ParseConf(config)
 	//2. 解析支持的币对
 	err = conf.IMap.Load(instruments)
 	if err != nil {
